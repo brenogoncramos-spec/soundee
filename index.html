@@ -114,7 +114,8 @@ function parseRate(raw){const t=nz(raw);let m=t.match(/nota\s*(?:de\s*)?([0-5](?
  if(m){const r=parseFloat(m[1].replace(',','.'));return r>=0.5&&r<=5?r:0;}
  m=t.match(/(?:nota|dou|dei)\s+(?:de\s+)?(cinco|quatro|tres|dois|um)(\s+e\s+meio)?|(cinco|quatro|tres|dois|um)(\s+e\s+meio)?\s+estrelas?/);if(m){const w=m[1]||m[3],h=m[2]||m[4];return WN[w]+(h?.5:0)>5?5:WN[w]+(h?.5:0);}
  m=t.match(/(?:^|[^\d.,])([1-5](?:[.,]5)?)(?![\d])/);return m?parseFloat(m[1].replace(',','.')):0;}
-function parseTargets(raw){const t=nz(raw),best={};Object.entries(D.cat).forEach(([id,c])=>{const q=nz(c.t).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');if(new RegExp('(^|[^a-z0-9])'+q+'($|[^a-z0-9])').test(t)&&(!best[c.k]||c.t.length>D.cat[best[c.k]].t.length))best[c.k]=id;});
+const RT=/(?:nota\s*(?:de\s*)?|dou\s+|dei\s+)?(?:[0-5](?:[.,][05])?|cinco|quatro|tres|dois|um)(?:\s+e\s+meio)?\s*(?:\/\s*5|de\s*5|estrelas?|★)|nota\s*(?:de\s*)?(?:[0-5](?:[.,][05])?|cinco|quatro|tres|dois|um)\b|\b(?:dou|dei)\s+(?:[0-5](?:[.,][05])?|cinco|quatro|tres|dois|um)\b/g;
+function parseTargets(raw){const t=nz(raw).replace(RT,' '),best={};Object.entries(D.cat).forEach(([id,c])=>{const q=nz(c.t).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');if(new RegExp('(^|[^a-z0-9])'+q+'($|[^a-z0-9])').test(t)&&(!best[c.k]||c.t.length>D.cat[best[c.k]].t.length))best[c.k]=id;});
  const main=best.alb||best.mus,ids=[];if(main)ids.push(main);if(best.art)ids.push(best.art);return ids;}
 function parseMoods(raw){const t=nz(raw),o=[];[['Noturno',/noit|madrugada|noturn/],['Íntimo',/intim|confession|sozinh/],['Dançante',/danc|pista|balada/],['Nostálgico',/nostalg|saudade|infancia/]].forEach(([k,r])=>{if(r.test(t))o.push(k);});return o;}
 function parseAll(raw){const ids=parseTargets(raw),rate=parseRate(raw),moods=parseMoods(raw);let b=raw;
