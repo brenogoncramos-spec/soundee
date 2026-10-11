@@ -134,7 +134,7 @@ function step(t){const c=S.ch;
 const nm=u=>(D.pro[u]||{}).name||'Alguém',hd=u=>'@'+((D.pro[u]||{}).handle||'?'),pc=u=>(D.pro[u]||{}).col||PAL[0];
 const av=(u,w)=>`<div class="av" style="background:${E(pc(u))};${w?`width:${w}px;height:${w}px;font-size:${w/2.4}px`:''}">${E(nm(u)[0]||'?').toUpperCase()}</div>`;
 function sub(col,key){db.collection(col).onSnapshot(s=>{const o={};s.docs.forEach(d=>o[d.id]=d.data());D[key]=o;L[key]=1;render();},e=>{S.msg='Erro de leitura ('+e.code+')';render();});}
-async function put(col,data){try{await db.doc(col+'/'+me).set(data);}catch(e){toast('Não foi possível salvar ('+e.code+')');}}
+async function put(col,data){try{await db.doc(col+'/'+me).set(data);return true;}catch(e){console.error(e);toast('Não foi possível salvar: '+(e&&(e.message||e.code)||'erro'));return false;}}
 function ratings(id,scope,week){const o=[];for(const u in D.rev){const it=(D.rev[u].items||{})[id];if(!it)continue;if(!vis(u,it))continue;if(week&&Date.now()-it.ts>WEEK)continue;if(scope==='br'&&(D.pro[u]||{}).country!=='BR')continue;o.push(it.r);}return o;}
 const cv=(c,w)=>`<div class="c" style="width:${w}px;height:${w}px;background:${E(c.col)};${c.img?`background-image:url('${E(c.img)}');background-size:cover;background-position:center;`:''}${c.k==='art'?'border-radius:50%':''}"></div>`;
 const seg=(a,items,cur,w)=>`<div class="seg" ${w?`style="width:${w}px"`:''}>${items.map(([k,l,ic])=>`<button data-a="${a}" data-v="${k}" aria-label="${l}" aria-pressed="${cur===k}" class="${cur===k?'on':''}">${I(ic)}${cur===k?l:''}</button>`).join('')}</div>`;
@@ -340,7 +340,7 @@ async function act(a,v,b,e){S.msg='';if(a!=='del')S.dl=false;if(a!=='sdel')S.del
  else if(a==='like'){const m={...((D.lik[me]||{}).m||{})};m[v]?delete m[v]:m[v]=Date.now();await put('likes',{m});}
  else if(a==='follow'){let ids=[...((D.fol[me]||{}).ids||[])];const at={...((D.fol[me]||{}).at||{})};if(ids.includes(v)){ids=ids.filter(x=>x!==v);delete at[v];}else{ids=[...ids,v];at[v]=Date.now();}await put('follows',{ids,at});}
  else if(a==='fav'||a==='later'){const s={fav:{...((D.sav[me]||{}).fav||{})},later:{...((D.sav[me]||{}).later||{})},rv:{...((D.sav[me]||{}).rv||{})}};s[a][S.item]?delete s[a][S.item]:s[a][S.item]=1;await put('saved',s);}
- else if(a==='save'){const x=$('#x').value.trim();if(!S.d.r){S.msg='Escolha uma nota.';}else{const items={...((D.rev[me]||{}).items||{})};const mk=Object.keys(S.d.m||{});items[S.item]={r:S.d.r,x,ts:Date.now(),v:ST(me).vis,m:mk};await put('reviews',{items});S.sh={id:S.item,r:S.d.r,x,m:mk,th:0};S.item=null;S.tab='feed';S.fa=false;S.scr='share';}}
+ else if(a==='save'){const x=$('#x').value.trim();if(!S.d.r){S.msg='Escolha uma nota.';}else{const items={...((D.rev[me]||{}).items||{})};const mk=Object.keys(S.d.m||{});items[S.item]={r:S.d.r,x,ts:Date.now(),v:ST(me).vis,m:mk};if(!await put('reviews',{items}))return;S.sh={id:S.item,r:S.d.r,x,m:mk,th:0};S.item=null;S.tab='feed';S.fa=false;S.scr='share';}}
  else if(a==='del'){if(!S.dl)S.dl=true;else{S.dl=false;const items={...((D.rev[me]||{}).items||{})};delete items[S.item];S.d=null;await put('reviews',{items});}}
  else if(a==='com'){const x=b.parentNode.querySelector('input').value.trim();if(!x)return;const rk=v,list=[...((D.com[me]||{}).list||[]),{id:'c'+Date.now().toString(36),rk,p:S.rep[rk]||null,x:x.slice(0,500),ts:Date.now()}];S.rep[rk]=null;S.cd[rk]='';await put('comments',{list});}
  else if(a==='chgo'){const c=S.ch;if(c.on){const t=c.in.trim();if(!t)return;c.in='';userSay(t);return;}const q=S.q.trim();if(!q)return;S.ch=CH0();S.ch.on=true;S.q='';userSay(q);return;}
@@ -376,7 +376,7 @@ async function act(a,v,b,e){S.msg='';if(a!=='del')S.dl=false;if(a!=='sdel')S.del
  else if(a==='plsave'){const p=plData();await put('playlists',{name:p.name,svc:S.pl.svc,ids:p.all.map(x=>x.id),ts:Date.now()});toast('Playlist salva no app');return;}
  else if(a==='setup'){const n=$('#n').value.trim(),h=$('#h').value.trim().toLowerCase();if(!n)S.msg='Digite um nome.';else if(!/^[a-z0-9._]{3,30}$/.test(h))S.msg='Usuário inválido (3 a 30: letras minúsculas, números, . e _).';else if(Object.keys(D.pro).some(u=>D.pro[u].handle===h))S.msg='Esse @ já existe.';else{S.scr='onb';await put('profiles',{name:n,handle:h,country:$('#c').value,col:PAL[h.length%5],ts:Date.now()});return;}}
  render();}
-document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(b)act(b.dataset.a,b.dataset.v,b,e);});
+document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(b)Promise.resolve().then(()=>act(b.dataset.a,b.dataset.v,b,e)).catch(er=>{console.error(er);toast('Erro: '+(er&&er.message||er));});});
 document.addEventListener('input',e=>{const t=e.target;
  if(t.id==='dr'){S.ch.draft=t.value;return;}if(t.id==='x'&&S.d){S.d.x=t.value;return;}if(t.dataset&&t.dataset.ck){S.cd[t.dataset.ck]=t.value;return;}
  if(t.id==='n'||t.id==='h'||t.id==='c'){S.su[t.id]=t.value;return;}if(t.id==='sn'){S.sn=t.value;return;}
