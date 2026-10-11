@@ -388,14 +388,16 @@ const dbx={
    sb.from('docs').select('data').eq('col',c).eq('id',i).maybeSingle().then(({data,error})=>{if(error){eb&&eb(sbErr(error));return;}cur=data?data.data:null;emit();});listen(c);},
   set:async d=>{const{error}=await sb.from('docs').upsert({col:c,id:i,data:d});if(error)throw sbErr(error);hubEmit(c,'set',i,d);},
   delete:async()=>{const{error}=await sb.from('docs').delete().eq('col',c).eq('id',i);if(error)throw sbErr(error);hubEmit(c,'del',i);}}}};
-const AU={mode:'in',msg:'',busy:false};
+const AU={mode:'in',msg:'',busy:false,ext:{}};
+fetch(SB_URL+'/auth/v1/settings',{headers:{apikey:SB_KEY}}).then(r=>r.json()).then(j=>{AU.ext=(j&&j.external)||{};if($('#ae'))authView();}).catch(()=>{});
 function authView(){const up=AU.mode==='up';
  $('#app').innerHTML=`<div class="col"><div style="margin-top:8px;color:var(--fg)"><h1 style="margin:0">${LOGO(48)}</h1></div><p class="m">${up?'Crie sua conta para avaliar discos e seguir amigos.':'Entre para ver as reviews da sua rede.'}</p>
  <div class="f">${I('chat')}<input id="ae" type="email" inputmode="email" autocomplete="email" autocapitalize="none" aria-label="E-mail" placeholder="E-mail" value="${E(AU.e||'')}"></div>
  <div class="f">${I('lock')}<input id="ap" type="password" autocomplete="${up?'new-password':'current-password'}" aria-label="Senha" placeholder="${up?'Senha (mínimo 8 caracteres)':'Senha'}"></div>
  <p class="${AU.ok?'m':'er'}" role="alert">${E(AU.msg)}</p>
  <button class="b" data-au="go" ${AU.busy?'disabled':''}>${AU.busy?'Aguarde…':up?'Criar conta':'Entrar'}${I('arrow')}</button>
- <button class="g" data-au="mode">${up?'Já tenho conta':'Criar uma conta'}</button></div>`;}
+ <button class="g" data-au="mode">${up?'Já tenho conta':'Criar uma conta'}</button>
+ ${[['google','Google'],['facebook','Facebook']].filter(([k])=>AU.ext[k]).map(([k,l])=>`<button class="g" data-au="${k}"><svg class="bi" style="width:22px;height:22px" aria-hidden="true"><use href="#${k}"/></svg>Continuar com ${l}</button>`).join('')}</div>`;}
 const AUMSG={'Invalid login credentials':'E-mail ou senha incorretos.','User already registered':'Esse e-mail já tem conta. Toque em "Já tenho conta".','Email not confirmed':'Confirme seu e-mail pelo link que enviamos e tente de novo.'};
 async function authGo(){const e=($('#ae').value||'').trim(),p=$('#ap').value||'';AU.e=e;AU.ok=false;
  if(!/^\S+@\S+\.\S+$/.test(e)){AU.msg='Digite um e-mail válido.';authView();return;}
@@ -407,7 +409,7 @@ async function authGo(){const e=($('#ae').value||'').trim(),p=$('#ap').value||''
  if(r.error){AU.msg=AUMSG[r.error.message]||('Não foi possível continuar ('+r.error.message+').');authView();return;}
  if(r.data.session){boot(r.data.session);return;}
  AU.mode='in';AU.ok=true;AU.msg='Conta criada. Confirme seu e-mail pelo link que enviamos e depois entre.';authView();}
-document.addEventListener('click',ev=>{const b=ev.target.closest('[data-au]');if(!b)return;if(b.dataset.au==='mode'){AU.mode=AU.mode==='up'?'in':'up';AU.msg='';AU.ok=false;AU.e=($('#ae')||{}).value||AU.e;authView();}else authGo();});
+document.addEventListener('click',ev=>{const b=ev.target.closest('[data-au]');if(!b)return;if(b.dataset.au==='google'||b.dataset.au==='facebook'){sb.auth.signInWithOAuth({provider:b.dataset.au,options:{redirectTo:location.origin}}).then(r=>{if(r.error){AU.msg='Não foi possível entrar com '+b.dataset.au+'.';AU.ok=false;authView();}});return;}if(b.dataset.au==='mode'){AU.mode=AU.mode==='up'?'in':'up';AU.msg='';AU.ok=false;AU.e=($('#ae')||{}).value||AU.e;authView();}else authGo();});
 document.addEventListener('keydown',ev=>{if(ev.key==='Enter'&&(ev.target.id==='ae'||ev.target.id==='ap'))authGo();});
 function boot(session){user={id:async()=>session.user.id,can:async()=>true};db=dbx;me=session.user.id;
  [['catalog','cat'],['profiles','pro'],['reviews','rev'],['comments','com'],['likes','lik'],['follows','fol'],['saved','sav'],['settings','set'],['market','mkt']].forEach(([c,k])=>sub(c,k));
