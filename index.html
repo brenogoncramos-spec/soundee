@@ -124,10 +124,18 @@ function parseAll(raw){const ids=parseTargets(raw),rate=parseRate(raw),moods=par
  if(b.length<12)b='';else{b=b[0].toUpperCase()+b.slice(1);if(!/[.!?]$/.test(b))b+='.';}
  return{ids,rate,moods,body:b};}
 function finish(){const c=S.ch;c.step='confirm';c.dOn=true;c.draft=c.body||compose(c.ids,c.rate,{},0);aiSay('Entendi: '+c.ids.map(id=>D.cat[id].t).join(' + ')+' · ★ '+fr(c.rate)+'. Está certo? Confira e ajuste abaixo.',[]);}
+async function resolveOnline(t,had){const c=S.ch;c.typing=true;render();
+ try{const{data}=await sb.functions.invoke('resolve',{body:{text:t}});
+  if(data&&data.xid&&(data.k!=='art'||!had)){const r=await sb.functions.invoke('music',{body:{action:'import',xid:data.xid}}),id=r.data&&r.data.id;
+   if(id){const{data:row}=await sb.from('docs').select('data').eq('col','catalog').eq('id',id).maybeSingle();if(row){D.cat[id]=row.data;const ar=row.data.aid;if(ar&&!D.cat[ar]){const{data:r2}=await sb.from('docs').select('data').eq('col','catalog').eq('id',ar).maybeSingle();if(r2)D.cat[ar]=r2.data;}}}}
+ }catch(e){}
+ c.typing=false;step(t);}
 function step(t){const c=S.ch;
  if(c.step==='rate'){const r=parseRate(t);if(!r){aiSay('Me diga uma nota de 1 a 5, pode ser com meia estrela.',RC);return;}c.rate=r;finish();return;}
  const P=parseAll(t);
  if(c.step==='confirm'){let ch=0;if(P.ids.length){c.ids=P.ids;ch=1;}if(P.rate){c.rate=P.rate;ch=1;}P.moods.forEach(m=>{c.moods[m]=1;ch=1;});if(P.body&&(!ch||P.body.length>20))c.draft=(c.draft+' '+P.body).trim();aiSay('Atualizei. Está certo agora?',[]);return;}
+ if(!c._r&&!P.ids.some(id=>D.cat[id]&&D.cat[id].k!=='art')){c._r=1;resolveOnline(t,P.ids.length>0);return;}
+ c._r=0;
  if(!P.ids.length){aiSay('Não achei esse álbum, artista ou música. Qual é?',Object.values(D.cat).filter(x=>x.k==='alb').slice(0,4).map(x=>x.t));return;}
  c.ids=P.ids;P.moods.forEach(m=>{c.moods[m]=1;});c.body=P.body;
  if(P.rate){c.rate=P.rate;finish();}else{c.step='rate';aiSay('Que nota você dá para '+c.ids.map(id=>D.cat[id].t).join(' + ')+'?',RC);}}
