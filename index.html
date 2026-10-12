@@ -373,9 +373,13 @@ const TOUR=[{tab:'feed',hl:'feed',ic:'home',t:'Seu feed',d:'Veja o que a sua red
 const tourUI=()=>{const k=S.tour,c=TOUR[k],last=k===TOUR.length-1;return `<div class="tov" aria-hidden="true"></div><div class="tcard" role="dialog" aria-modal="true" aria-label="${E(c.t)}"><div class="r" style="color:var(--ac)">${I(c.ic,'width:28px;height:28px')}<p class="m" style="flex:1">${k+1} de ${TOUR.length}</p></div><h3>${E(c.t)}</h3><p>${E(c.d)}</p><div class="r"><button class="g" data-a="tskip">Pular</button><button class="b" style="flex:1" data-a="tnext">${last?'Começar':'Próximo'}${I(last?'check':'arrow')}</button></div></div>`;};
 async function wsave(x){if(typeof x.photo==='string'&&x.photo.startsWith('data:')){try{x={...x,photo:await phUp(x.photo)};}catch(e){console.error('foto',e);toast('Não foi possível enviar a foto ('+((e&&(e.message||e.error))||'erro')+'). Tente de novo.',6000);return false;}}const pr={...D.pro[me],...x};for(const k in x){const v=x[k];if(v===undefined||v===''||(typeof v==='object'&&!Object.keys(v).length))delete pr[k];}return put('profiles',pr);}
 async function wfinish(g){const pr={...D.pro[me]};delete pr.ob;if(g&&g.length)pr.genres=g;S.obd=1;S.wph=S.wb=S.wl=undefined;S.scr='';S.tab='feed';S.item=null;S.tour=0;S.tf=1;scrollTo(0,0);render();await put('profiles',pr);}
-async function pickPhoto(f){if(!f)return;if(!/^image\//.test(f.type)||f.size>25e6){toast('Escolha uma imagem de até 25 MB.');return;}
- let bm;try{bm=await createImageBitmap(f);}catch(e){toast('Não foi possível ler essa imagem.');return;}
- cropOpen(bm,async u=>{if(S.scr==='wiz'){S.wph=u;render();return;}if(await wsave({photo:u}))toast('Foto atualizada');});}
+async function readImg(f){const M=1600,fit=(w,h,draw)=>{const k=Math.min(1,M/Math.max(w,h)),c=document.createElement('canvas');c.width=Math.max(1,Math.round(w*k));c.height=Math.max(1,Math.round(h*k));draw(c.getContext('2d'),c.width,c.height);return c;};
+ const url=URL.createObjectURL(f);try{const im=new Image();im.src=url;await im.decode();if(im.naturalWidth)return fit(im.naturalWidth,im.naturalHeight,(x,w,h)=>x.drawImage(im,0,0,w,h));}catch(e){}finally{setTimeout(()=>URL.revokeObjectURL(url),3e4);}
+ const bm=await createImageBitmap(f);return fit(bm.width,bm.height,(x,w,h)=>x.drawImage(bm,0,0,w,h));}
+async function pickPhoto(f){try{if(!f)return;if(f.type&&!/^image\//.test(f.type)||f.size>25e6){toast('Escolha uma imagem de até 25 MB.');return;}
+ toast('Carregando foto…');let bm;try{bm=await readImg(f);}catch(e){console.error('foto',e);toast('Não foi possível ler essa imagem. Tente outra foto (JPEG ou PNG).',5000);return;}
+ clearTimeout(S._t);S.toast='';render();
+ cropOpen(bm,async u=>{if(S.scr==='wiz'){S.wph=u;render();return;}if(await wsave({photo:u}))toast('Foto atualizada');});}catch(e){console.error('foto',e);toast('Não foi possível abrir a foto ('+((e&&e.message)||'erro')+').',5000);}}
 function cropOpen(bm,done){const old=$('#crop');if(old)old.remove();const prev=document.activeElement,V=Math.min(300,innerWidth-64),m=Math.min(bm.width,bm.height),base=V/m;
  let z=1,ox=0,oy=0;const P=new Map();let pd=0;
  const el=document.createElement('div');el.id='crop';el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');el.setAttribute('aria-labelledby','crt');
