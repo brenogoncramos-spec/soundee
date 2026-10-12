@@ -549,7 +549,7 @@ function person(){const u=S.pu,p=D.pro[u]||{},fl=(D.fol[me]||{}).ids||[],its=(D.
  ${!hid&&p.bio?`<p style="line-height:1.45">${E(p.bio)}</p>`:''}${!hid&&socials(p.links)?`<div class="r" style="flex-wrap:wrap">${socials(p.links)}</div>`:''}
  <div class="r" style="justify-content:space-between">${st('file',hid?'–':ks.length,'reviews')}${st('users',fw,'seguidores')}${st('user',ng,'seguindo')}</div>
  ${u!==me?`<button class="b" data-a="follow" data-v="${u}" aria-pressed="${fl.includes(u)}">${I(fl.includes(u)?'check':'userplus')}${fl.includes(u)?'Seguindo':'Seguir'}</button>`:''}
- ${hid?emp('lock','Perfil privado. Siga para ver as reviews.'):ks.map(id=>`<button class="lk rw" aria-label="Abrir ${E(D.cat[id].t)}" data-a="item" data-v="${E(id)}">${cv(D.cat[id],56)}<span style="min-width:0"><b>${E(D.cat[id].t)}</b><br><span class="m">${E(D.cat[id].a||KN[D.cat[id].k])} · ${ago(its[id].ts)}</span></span><span class="st" style="margin-left:auto">${fr(its[id].r)}</span></button>`).join('')||'<p class="m">Nenhuma review pública ainda.</p>'}</div>`;}
+ ${hid?emp('lock','Perfil privado. Siga para ver as reviews.'):ks.map(id=>{const my=u!==me?((D.rev[me]||{}).items||{})[id]:null;return `<button class="lk rw" aria-label="Abrir ${E(D.cat[id].t)}, nota ${fr(its[id].r)}${my?', sua nota '+fr(my.r):''}" data-a="item" data-v="${E(id)}">${cv(D.cat[id],56)}<span style="min-width:0"><b>${E(D.cat[id].t)}</b><br><span class="m">${E(D.cat[id].a||KN[D.cat[id].k])} · ${ago(its[id].ts)}</span></span><span style="margin-left:auto;text-align:right"><span class="st">${fr(its[id].r)}</span>${my?`<br><span class="m" style="font-size:12px">Você: ${fr(my.r)}</span>`:''}</span></button>`;}).join('')||'<p class="m">Nenhuma review pública ainda.</p>'}</div>`;}
 const NP=()=>({tab:S.tab,item:S.item||null,scr:(S.scr==='wiz'?'':S.scr)||'',pp:S.scr==='prod'?S.pp:null,pu:S.scr==='user'?S.pu:null,pi:S.scr==='user'?S.pi:null});
 const SCY={};addEventListener('scroll',()=>{const k=history.state&&history.state.k;if(k)SCY[k]=scrollY;},{passive:true});
 function navSync(){navSync0();if(S.restore){S.restore=0;scrollTo(0,SCY[JSON.stringify(NP())]||0);}}
@@ -649,7 +649,7 @@ async function act(a,v,b,e){S.msg='';if(a!=='del')S.dl=false;if(a!=='sdel')S.del
  else if(a==='tskip'){S.tour=null;S.tab='feed';S.item=null;S.scr=(!ST(me).pnd&&['off','install'].includes(pstate()))?'ativ':'';scrollTo(0,0);}
  else if(a==='pon'){S.pmsg='';await pon();}
  else if(a==='poff'){await poff();}
- else if(a==='pret'){}
+ else if(a==='pret'){const b=pstate()==='blocked';toast(b?'Ainda bloqueadas. Libere nas configurações do aparelho':'Permissão liberada. Toque em Ativar');}
  else if(a==='pskip'){S.scr='';scrollTo(0,0);saveSet({pnd:1});}
  else if(a==='pdone'){S.scr='';scrollTo(0,0);}
  else if(a==='pgo'){S.scr='ativ';S.pmsg='';scrollTo(0,0);}
