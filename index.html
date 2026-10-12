@@ -163,7 +163,9 @@ function step(t){const c=S.ch;
  c.ids=P.ids;P.moods.forEach(m=>{c.moods[m]=1;});c.body=P.body;
  if(P.rate){c.rate=P.rate;finish();}else{c.step='rate';aiSay('Que nota você dá para '+c.ids.map(id=>D.cat[id].t).join(' + ')+'?',RC);}}
 const nm=u=>(D.pro[u]||{}).name||'Alguém',hd=u=>'@'+((D.pro[u]||{}).handle||'?'),pc=u=>(D.pro[u]||{}).col||PAL[0];
-const phOk=x=>/^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(x||'')?x:'';
+const PH_RE=/^https:\/\/fwhnbjyvnpadwqhgeyeg\.supabase\.co\/storage\/v1\/object\/public\/avatars\/[0-9a-f-]{36}\/a\.jpg(\?v=\d+)?$/;
+const phOk=x=>(/^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(x||'')||PH_RE.test(x||''))?x:'';
+async function phUp(d){const b=await (await fetch(d)).blob(),path=me+'/a.jpg',{error}=await sb.storage.from('avatars').upload(path,b,{upsert:true,contentType:'image/jpeg',cacheControl:'3600'});if(error)throw error;return sb.storage.from('avatars').getPublicUrl(path).data.publicUrl+'?v='+Date.now();}
 const av=(u,w,src)=>{const x=src===undefined?phOk((D.pro[u]||{}).photo):src,z=w?`width:${w}px;height:${w}px;font-size:${w/2.4}px;`:'';return x?`<img class="av" src="${x}" alt="" style="${z}object-fit:cover">`:`<div class="av" style="background:${E(pc(u))};${z}">${E(nm(u)[0]||'?').toUpperCase()}</div>`;};
 let enr=0;
 function enrich(){if(enr||!me||!L.cat)return;const ord={art:0,alb:1,mus:2},ids=Object.entries(D.cat).filter(([id,c])=>!c.img&&!c.sy&&!/^(sp|it)-/.test(id)).sort((a,b)=>ord[a[1].k]-ord[b[1].k]).map(x=>x[0]);if(!ids.length)return;enr=1;
@@ -364,7 +366,7 @@ function wiz(){const i=S.wi||1,p=D.pro[me]||{};
  const n=Object.keys(S.og).filter(k=>S.og[k]).length;return wzh(4,'Seus gêneros','Escolha 3 ou mais para recomendarmos músicas.')+`<div class="r" style="flex-wrap:wrap">${GN.map(g=>`<button class="g ${S.og[g]?'on':''}" aria-pressed="${!!S.og[g]}" data-a="og" data-v="${g}">${g}</button>`).join('')}</div><p class="m">${n} selecionados · mínimo 3</p>`+wbtn('Ver como funciona',1);}
 const TOUR=[{tab:'feed',hl:'feed',ic:'home',t:'Seu feed',d:'Veja o que a sua rede está ouvindo e avaliando. Toque em Todos para ver o app inteiro.'},{tab:'search',hl:'search',ic:'plus',t:'Dê nota pro que você ouve',d:'Busque um álbum, artista ou música e dê uma nota de 0 a 10, com uma casa decimal. Escreva uma crítica ou converse com o assistente.'},{tab:'rank',hl:'rank',ic:'chart',t:'Ranking',d:'Veja os discos e artistas mais bem avaliados pela comunidade.'},{hl:'shop',ic:'bag',t:'Loja em breve',d:'Camisetas, ingressos e discos chegam por aqui. A loja ainda não está disponível.'},{tab:'me',hl:'me',ic:'user',t:'Seu perfil',d:'Suas reviews, seguidores e ajustes. Edite foto, bio e redes quando quiser, e compartilhe qualquer review como imagem.'}];
 const tourUI=()=>{const k=S.tour,c=TOUR[k],last=k===TOUR.length-1;return `<div class="tov" aria-hidden="true"></div><div class="tcard" role="dialog" aria-modal="true" aria-label="${E(c.t)}"><div class="r" style="color:var(--ac)">${I(c.ic,'width:28px;height:28px')}<p class="m" style="flex:1">${k+1} de ${TOUR.length}</p></div><h3>${E(c.t)}</h3><p>${E(c.d)}</p><div class="r"><button class="g" data-a="tskip">Pular</button><button class="b" style="flex:1" data-a="tnext">${last?'Começar':'Próximo'}${I(last?'check':'arrow')}</button></div></div>`;};
-async function wsave(x){const pr={...D.pro[me],...x};for(const k in x){const v=x[k];if(v===undefined||v===''||(typeof v==='object'&&!Object.keys(v).length))delete pr[k];}return put('profiles',pr);}
+async function wsave(x){if(typeof x.photo==='string'&&x.photo.startsWith('data:')){try{x={...x,photo:await phUp(x.photo)};}catch(e){toast('Não foi possível enviar a foto. Tente de novo.');return false;}}const pr={...D.pro[me],...x};for(const k in x){const v=x[k];if(v===undefined||v===''||(typeof v==='object'&&!Object.keys(v).length))delete pr[k];}return put('profiles',pr);}
 async function wfinish(g){const pr={...D.pro[me]};delete pr.ob;if(g&&g.length)pr.genres=g;S.obd=1;S.wph=S.wb=S.wl=undefined;S.scr='';S.tab='feed';S.item=null;S.tour=0;S.tf=1;scrollTo(0,0);render();await put('profiles',pr);}
 async function pickPhoto(f){if(!f)return;if(!/^image\//.test(f.type)||f.size>25e6){toast('Escolha uma imagem de até 25 MB.');return;}
  let u='';try{const bm=await createImageBitmap(f),q=Math.min(bm.width,bm.height),c=document.createElement('canvas');c.width=c.height=320;c.getContext('2d').drawImage(bm,(bm.width-q)/2,(bm.height-q)/2,q,q,0,0,320,320);u=c.toDataURL('image/jpeg',.82);}catch(e){toast('Não foi possível ler essa imagem.');return;}
@@ -490,7 +492,7 @@ async function act(a,v,b,e){S.msg='';if(a!=='del')S.dl=false;if(a!=='sdel')S.del
  else if(a==='net'){S.scr='net';S.nt=v;}else if(a==='nt')S.nt=v;
  else if(a==='og'){S.og[v]=!S.og[v];S.msg='';}
  else if(a==='phpick'){const f=$('#ph');if(f)f.click();}
- else if(a==='phrm'){if(S.scr==='wiz')S.wph='';else if(await wsave({photo:''}))toast('Foto removida');}
+ else if(a==='phrm'){if(S.scr==='wiz')S.wph='';else if(await wsave({photo:''})){toast('Foto removida');sb.storage.from('avatars').remove([me+'/a.jpg']).catch(()=>{});}}
  else if(a==='wback'){S.wi=Math.max(1,(S.wi||1)-1);S.wf=1;scrollTo(0,0);}
  else if(a==='wskip'||a==='wnext'){if(S.wlk||Date.now()-(S.wt||0)<500)return;S.wlk=1;try{const i=S.wi||1,sk=a==='wskip';let ok=true;
   if(!sk){if(i===1&&S.wph!==undefined)ok=await wsave({photo:S.wph});
