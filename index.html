@@ -525,7 +525,7 @@ async function act(a,v,b,e){S.msg='';if(a!=='del')S.dl=false;if(a!=='sdel')S.del
  else if(a==='mood'){S.d.x=$('#rv').value;if(!S.d.m)S.d.m={};S.d.m[v]?delete S.d.m[v]:S.d.m[v]=1;}
  else if(a==='net'){S.scr='net';S.nt=v;}else if(a==='nt')S.nt=v;
  else if(a==='og'){S.og[v]=!S.og[v];S.msg='';}
- else if(a==='phpick'){const f=$('#ph');if(f)f.click();}
+ else if(a==='phpick'){if(window.__phi)window.__phi.remove();const f=document.createElement('input');f.type='file';f.accept='image/*';f.hidden=true;f.setAttribute('aria-hidden','true');f.onchange=()=>{const x=f.files&&f.files[0];f.remove();window.__phi=null;pickPhoto(x);};document.body.appendChild(f);window.__phi=f;f.click();}
  else if(a==='phrm'){if(S.scr==='wiz')S.wph='';else if(await wsave({photo:''})){toast('Foto removida');sb.storage.from('avatars').remove([me+'/a.jpg']).catch(()=>{});}}
  else if(a==='wback'){S.wi=Math.max(1,(S.wi||1)-1);S.wf=1;scrollTo(0,0);}
  else if(a==='wskip'||a==='wnext'){if(S.wlk||Date.now()-(S.wt||0)<500)return;S.wlk=1;try{const i=S.wi||1,sk=a==='wskip';let ok=true;
