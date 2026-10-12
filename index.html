@@ -30,7 +30,7 @@ textarea{resize:none;min-height:96px;padding:12px 16px}
 .m{color:var(--mut);font-size:13px}.st{color:var(--star);font-weight:700;font-size:17px;line-height:22px}.er{color:var(--er);font-size:13px}
 .k{background:var(--card);border-radius:16px;padding:14px;margin:14px 0;display:flex;flex-direction:column;gap:10px}
 .col>.k{margin:0}
-@media(max-width:359px){.pbt{flex-direction:column;gap:8px}.tabs button{font-size:14px;padding:0 2px}h2.ht[style*="font-size:26px"]{font-size:22px!important}}
+@media(max-width:359px){.pbt{flex-direction:column;gap:8px}.tabs button{font-size:14px;padding:0 4px}h2.ht[style*="font-size:26px"]{font-size:22px!important}}
 .pbt{display:flex;gap:4px;flex:none}.pbt .g{width:44px;min-height:44px;height:44px;padding:0}
 @media(max-width:359px){.gt{-webkit-mask-image:linear-gradient(90deg,#000 78%,transparent);mask-image:linear-gradient(90deg,#000 78%,transparent)}.tabs button svg,.sl svg{display:none}.rt{padding:0 56px}.rt span:nth-child(even){visibility:hidden}}
 .r{display:flex;align-items:center;gap:12px}.col{display:flex;flex-direction:column;gap:14px}
@@ -58,7 +58,7 @@ nav .on{color:var(--ac);font-weight:700}nav .pl{background:var(--fg);color:var(-
 a.g{text-decoration:none;color:var(--fg)}
 .toast{position:fixed;left:20px;right:20px;bottom:100px;max-width:440px;margin:0 auto;background:var(--fg);color:var(--bg);border-radius:12px;padding:14px;font-weight:700;text-align:center;animation:up .4s both;z-index:6}.bd{position:absolute;top:-2px;right:-2px;background:var(--fg);color:var(--on);border-radius:999px;min-width:18px;height:18px;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px}.trk{width:46px;height:26px;border-radius:999px;position:relative;flex:none}.kn{position:absolute;top:3px;width:20px;height:20px;border-radius:50%;transition:left .2s}.bi{width:28px;height:28px;flex:none}
 :focus-visible{outline:2px solid var(--ac);outline-offset:2px}
-.tabs{display:flex;border-bottom:1px solid var(--line)}.tabs button{flex:1;min-width:0;padding:0 4px;white-space:nowrap;background:none;border:0;border-bottom:2px solid transparent;border-radius:0;margin-bottom:-1px;color:var(--mut);min-height:44px;font-weight:500;display:flex;align-items:center;justify-content:center;gap:6px}.tabs .on{color:var(--fg);border-bottom-color:var(--br);font-weight:700}
+.tabs{display:flex;border-bottom:1px solid var(--line)}.tabs button{flex:1 1 auto;min-width:0;padding:0 8px;white-space:nowrap;background:none;border:0;border-bottom:2px solid transparent;border-radius:0;margin-bottom:-1px;color:var(--mut);min-height:44px;font-weight:500;display:flex;align-items:center;justify-content:center;gap:6px}.tabs .on{color:var(--fg);border-bottom-color:var(--br);font-weight:700}
 @keyframes inn{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
 @keyframes up{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
 @keyframes pulse{50%{opacity:.55}}.bub{max-width:85%;padding:10px 14px;border-radius:16px;font-size:15px;line-height:1.4;animation:up .4s ease both}
@@ -185,7 +185,7 @@ function sub(col,key){db.collection(col).onSnapshot(s=>{const o={};s.docs.forEac
 async function put(col,data){if(col==='reviews')data={...data,sc:10};try{await db.doc(col+'/'+me).set(data);return true;}catch(e){console.error(e);S.lastErr=(e&&(e.message||e.code)||'erro');toast('Não foi possível salvar: '+S.lastErr,7000);return false;}}
 function ratings(id,scope,week){const o=[];for(const u in D.rev){const it=(D.rev[u].items||{})[id];if(!it)continue;if(!vis(u,it))continue;if(week&&Date.now()-it.ts>WEEK)continue;if(scope==='br'&&(D.pro[u]||{}).country!=='BR')continue;o.push(it.r);}return o;}
 const cv=(c,w)=>`<div class="c" style="width:${w}px;height:${w}px;background:${E(c.col)};${c.img?`background-image:url('${E(c.img)}');background-size:cover;background-position:center;`:''}${c.k==='art'?'border-radius:50%':''}"></div>`;
-const tabs=(a,items,cur)=>`<div class="tabs" role="group">${items.map(([k,l,ic])=>`<button data-a="${a}" data-v="${k}" aria-pressed="${cur===k}" class="${cur===k?'on':''}">${I(ic,'width:18px;height:18px')}${l}</button>`).join('')}</div>`;
+const tabs=(a,items,cur)=>`<div class="tabs" role="group">${items.map(([k,l,ic])=>`<button data-a="${a}" data-v="${k}" aria-pressed="${cur===k}" class="${cur===k?'on':''}">${l}</button>`).join('')}</div>`;
 const seg=(a,items,cur,w)=>`<div class="seg" ${w?`style="width:${w}px"`:''}>${items.map(([k,l,ic])=>`<button data-a="${a}" data-v="${k}" aria-label="${l}" aria-pressed="${cur===k}" class="${cur===k?'on':''}">${I(ic)}${cur===k||items.length<3?l:''}</button>`).join('')}</div>`;
 function revs(){const fl=(D.fol[me]||{}).ids||[],a=[];for(const u in D.rev){const its=D.rev[u].items||{},ok=id=>vis(u,its[id]),fold=id=>{const w=D.cat[id];return w&&w.k==='mus'&&w.al&&its[w.al]&&ok(w.al)?w.al:null;},tk={};
   for(const id in its)if(ok(id)){const al=fold(id);if(al)(tk[al]=tk[al]||[]).push({id,...its[id]});}
