@@ -409,12 +409,59 @@ function plData(){const mine=(D.rev[me]||{}).items||{},seeds=Object.entries(mine
  const disc=songs.filter(([id])=>!bid.has(id)&&!mine[id]).map(([id,c])=>{const r=ratings(id);return{id,c,nw:1,a:r.length?avg(r):0};}).sort((x,y)=>y.a-x.a).slice(0,4);
  let all=[...base.slice(0,8),...disc];const rot=S.pl.seed%Math.max(1,all.length);all=[...all.slice(rot),...all.slice(0,rot)].filter(x=>!S.pl.rm[x.id]);
  return{all,name:['Noites de '+top,'Seu '+top+' da semana',top+' + descobertas'][S.pl.seed%3],base:seeds.slice(0,3).map(([id])=>D.cat[id].t).join(', ')};}
-function plv(){const p=plData(),sv=S.pl.svc,q=encodeURIComponent(p.name);
+
+/* ===== Criar a playlist no Spotify, Apple Music ou Deezer ===== */
+const b64u=a=>btoa(String.fromCharCode(...a)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''),rnd=n=>[...crypto.getRandomValues(new Uint8Array(n))].map(b=>'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~'[b%66]).join(''),sha=async v=>b64u(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(v)))),REDIR=()=>location.origin+'/',SPK='sx_sp';
+async function pcfg(force){if(S.pcfg&&!force)return S.pcfg;try{const{data,error}=await sb.functions.invoke('playlist-export',{body:{action:'config'}});S.pcfg=error||!data?{}:data;}catch(e){S.pcfg={};}render();if(S.pcfg.apple&&S.scr==='pl')amPrep();return S.pcfg;}
+const pavail=svc=>{const c=S.pcfg;if(!c)return null;return svc==='Spotify'?!!c.spotify:svc==='Deezer'?!!c.deezer:!!c.apple;};
+const ptracks=()=>plData().all.map(x=>({t:x.c.t,a:x.c.a||''}));
+const spSave=(r,old)=>localStorage.setItem(SPK,JSON.stringify({at:r.access_token,rt:r.refresh_token||old,exp:Date.now()+(r.expires_in||3600)*1000}));
+const spTok=()=>{try{const t=JSON.parse(localStorage.getItem(SPK)||'null');return t&&t.exp>Date.now()+30000?t.at:null;}catch(e){return null;}};
+async function spRefresh(){try{const t=JSON.parse(localStorage.getItem(SPK)||'null'),cid=S.pcfg&&S.pcfg.spotify;if(!t||!t.rt||!cid)return null;const r=await fetch('https://accounts.spotify.com/api/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({grant_type:'refresh_token',refresh_token:t.rt,client_id:cid})}).then(r=>r.json());if(!r.access_token)return null;spSave(r,t.rt);return r.access_token;}catch(e){return null;}}
+async function spAuth(plan){const v=rnd(64),st=rnd(16);sessionStorage.setItem('sx_v',v);sessionStorage.setItem('sx_st',st);sessionStorage.setItem('sx_cid',S.pcfg.spotify);sessionStorage.setItem('sx_pend',JSON.stringify(plan));
+ location.href='https://accounts.spotify.com/authorize?'+new URLSearchParams({client_id:S.pcfg.spotify,response_type:'code',redirect_uri:REDIR(),scope:'playlist-modify-private',code_challenge_method:'S256',code_challenge:await sha(v),state:st});}
+async function spCreate(plan){const tk=spTok()||await spRefresh();if(!tk)return{need:1};const H={Authorization:'Bearer '+tk},uris=[],missing=[];
+ for(const x of plan.tracks.slice(0,40)){const r=await fetch('https://api.spotify.com/v1/search?type=track&limit=1&q='+encodeURIComponent('track:'+x.t+' artist:'+x.a),{headers:H});if(r.status===401){localStorage.removeItem(SPK);return{need:1};}if(!r.ok)continue;const j=await r.json(),it=j.tracks&&j.tracks.items&&j.tracks.items[0];it?uris.push(it.uri):missing.push(x.t+' — '+x.a);}
+ if(!uris.length)return{err:'Não encontramos essas faixas no Spotify.',missing};
+ const c=await fetch('https://api.spotify.com/v1/me/playlists',{method:'POST',headers:{...H,'Content-Type':'application/json'},body:JSON.stringify({name:plan.name,description:'Criada no Soundee',public:false})});
+ if(c.status===403)return{err:'O Spotify ainda não liberou a sua conta neste app. Peça para ser adicionado à lista de usuários.'};if(!c.ok)return{err:'Não foi possível criar a playlist no Spotify.'};
+ const pl=await c.json(),url=pl.external_urls&&pl.external_urls.spotify,a=await fetch('https://api.spotify.com/v1/playlists/'+pl.id+'/items',{method:'POST',headers:{...H,'Content-Type':'application/json'},body:JSON.stringify({uris})});
+ if(!a.ok)return{err:'A playlist foi criada, mas não foi possível adicionar as faixas.',url,missing};return{url,added:uris.length,missing};}
+function dzAuth(plan){sessionStorage.setItem('sx_pend',JSON.stringify(plan));location.href='https://connect.deezer.com/oauth/auth.php?'+new URLSearchParams({app_id:S.pcfg.deezer,redirect_uri:REDIR(),perms:'basic_access,manage_library',response_type:'token'});}
+async function dzCreate(plan,token){try{const{data,error}=await sb.functions.invoke('playlist-export',{body:{action:'deezer',token,name:plan.name,tracks:plan.tracks}});if(error||!data)return{err:'Não foi possível falar com o Deezer.'};if(data.error)return data.error==='expired'?{need:1}:{err:data.error,url:data.url,missing:data.missing};return data;}catch(e){return{err:'Não foi possível falar com o Deezer.'};}}
+async function amPrep(){if(window.__amp||!S.pcfg||!S.pcfg.apple)return;window.__amp=(async()=>{try{const{data,error}=await sb.functions.invoke('playlist-export',{body:{action:'apple-token'}});if(error||!data||!data.token)return null;
+ if(!window.MusicKit){await new Promise(r=>{document.addEventListener('musickitloaded',r,{once:true});const sc=document.createElement('script');sc.src='https://js-cdn.music.apple.com/musickit/v3/musickit.js';sc.async=true;sc.onerror=()=>r();document.head.appendChild(sc);setTimeout(r,8000);});}
+ if(!window.MusicKit)return null;await MusicKit.configure({developerToken:data.token,app:{name:'Soundee',build:'1.0'}});return{mk:MusicKit.getInstance(),dev:data.token};}catch(e){console.error(e);return null;}})();return window.__amp;}
+async function amCreate(plan){const pre=await amPrep();if(!pre)return{err:'Não foi possível conectar ao Apple Music agora.'};let mut;try{mut=await pre.mk.authorize();}catch(e){return{err:'Você não autorizou o Apple Music.'};}
+ const sf=pre.mk.storefrontId||'br',H={Authorization:'Bearer '+pre.dev},ids=[],missing=[];
+ for(const x of plan.tracks.slice(0,40)){try{const j=await fetch('https://api.music.apple.com/v1/catalog/'+sf+'/search?types=songs&limit=1&term='+encodeURIComponent(x.t+' '+x.a),{headers:H}).then(r=>r.json()),it=j.results&&j.results.songs&&j.results.songs.data&&j.results.songs.data[0];it?ids.push(it.id):missing.push(x.t+' — '+x.a);}catch(e){missing.push(x.t+' — '+x.a);}}
+ if(!ids.length)return{err:'Não encontramos essas faixas no Apple Music.',missing};
+ const c=await fetch('https://api.music.apple.com/v1/me/library/playlists',{method:'POST',headers:{...H,'Music-User-Token':mut,'Content-Type':'application/json'},body:JSON.stringify({attributes:{name:plan.name,description:'Criada no Soundee'},relationships:{tracks:{data:ids.map(id=>({id,type:'songs'}))}}})});
+ if(!c.ok)return{err:'Não foi possível criar a playlist no Apple Music.'};const j=await c.json(),pid=j.data&&j.data[0]&&j.data[0].id;return{url:pid?'https://music.apple.com/library/playlist/'+pid:'https://music.apple.com/library',added:ids.length,missing};}
+async function pxrun(svc){const plan={svc,name:plData().name,tracks:ptracks()};if(!plan.tracks.length){toast('Adicione faixas antes de criar a playlist.');return;}S.px={st:'ld',svc};render();let r;
+ try{if(svc==='Spotify'){r=await spCreate(plan);if(r.need){await spAuth(plan);return;}}
+ else if(svc==='Deezer'){const tk=sessionStorage.getItem('sx_dz');if(!tk){dzAuth(plan);return;}r=await dzCreate(plan,tk);if(r.need){sessionStorage.removeItem('sx_dz');dzAuth(plan);return;}}
+ else r=await amCreate(plan);}catch(e){console.error(e);r={err:'Não foi possível criar a playlist agora. Tente de novo.'};}
+ S.px=r.err?{st:'err',svc,msg:r.err,url:r.url,missing:r.missing,n:plan.tracks.length}:{st:'ok',svc,url:r.url,added:r.added,missing:r.missing,n:plan.tracks.length};render();}
+async function xback(){try{const q=new URLSearchParams(location.search),h=new URLSearchParams(location.hash.replace(/^#/,'')),pend=()=>{try{return JSON.parse(sessionStorage.getItem('sx_pend')||'null');}catch(e){return null;}};
+ if(q.get('state')&&q.get('state')===sessionStorage.getItem('sx_st')){history.replaceState(null,'',location.pathname);const plan=pend(),code=q.get('code');['sx_st','sx_pend'].forEach(k=>sessionStorage.removeItem(k));S.scr='pl';S.pl.svc='Spotify';
+  if(!code||!plan){S.px={st:'err',svc:'Spotify',msg:'A conexão com o Spotify foi cancelada.'};render();return;}
+  S.px={st:'ld',svc:'Spotify'};render();const r=await fetch('https://accounts.spotify.com/api/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({grant_type:'authorization_code',code,redirect_uri:REDIR(),client_id:sessionStorage.getItem('sx_cid')||'',code_verifier:sessionStorage.getItem('sx_v')||''})}).then(r=>r.json()).catch(()=>null);
+  if(!r||!r.access_token){S.px={st:'err',svc:'Spotify',msg:'Não foi possível conectar ao Spotify.'};render();return;}spSave(r);await pcfg();const o=await spCreate(plan);
+  S.px=o.err?{st:'err',svc:'Spotify',msg:o.err,url:o.url,missing:o.missing,n:plan.tracks.length}:{st:'ok',svc:'Spotify',url:o.url,added:o.added,missing:o.missing,n:plan.tracks.length};render();return;}
+ if(h.get('access_token')&&pend()&&pend().svc==='Deezer'){const tk=h.get('access_token'),plan=pend();history.replaceState(null,'',location.pathname);sessionStorage.removeItem('sx_pend');sessionStorage.setItem('sx_dz',tk);S.scr='pl';S.pl.svc='Deezer';S.px={st:'ld',svc:'Deezer'};render();
+  const o=await dzCreate(plan,tk);if(o.need)sessionStorage.removeItem('sx_dz');S.px=(o.err||o.need)?{st:'err',svc:'Deezer',msg:o.err||'A conexão com o Deezer expirou. Tente de novo.',url:o.url,missing:o.missing,n:plan.tracks.length}:{st:'ok',svc:'Deezer',url:o.url,added:o.added,missing:o.missing,n:plan.tracks.length};render();}
+ }catch(e){console.error(e);}}
+
+function plv(){const p=plData(),sv=S.pl.svc,ok=pavail(sv),px=S.px&&S.px.svc===sv?S.px:null;
  return `<div class="col"><div class="r"><button class="g ib" aria-label="Voltar" data-a="scr" data-v="">${I('back')}</button><span style="color:var(--ac)">${I('sparkle')}</span><h2 class="ht" style="flex:1">Playlist IA</h2><button class="g ib" aria-label="Gerar outra" data-a="plrg">${I('refresh')}</button></div>
  <div class="k"><h3 style="font-size:20px">${E(p.name)}</h3><p class="m">${p.base?'Baseado em '+E(p.base):'Avalie com 4 ou mais para personalizar'}</p><p class="m r" style="gap:6px">${I('note','width:16px;height:16px')}${p.all.length} faixas</p></div>
  ${p.all.map(x=>`<div class="r rw">${cv(x.c,44)}<span style="flex:1;min-width:0"><b>${E(x.c.t)}</b><br><span class="m">${E(x.c.a)}</span></span>${x.nw?`<span style="color:var(--ac)" title="Descoberta">${I('sparkle')}</span>`:''}<button class="g ib" aria-label="Remover ${E(x.c.t)}" data-a="plrm" data-v="${E(x.id)}">${I('x')}</button></div>`).join('')||'<p class="m">Sem faixas. Gere outra ou avalie mais.</p>'}
  ${seg('plsv',[['Spotify','Spotify','spotify'],['Apple Music','Apple Music','applemusic'],['Deezer','Deezer','deezer']],sv)}
- <button class="b" data-a="plsave">${I('check')}Salvar no Soundee</button><p class="m">A exportação para ${E(sv)} ainda não está disponível. A playlist fica salva aqui no app.</p>
+ <button class="b" data-a="pxgo" ${(!ok||(px&&px.st==='ld'))?'disabled':''}>${I(({Spotify:'spotify','Apple Music':'applemusic',Deezer:'deezer'})[sv])}${px&&px.st==='ld'?'Criando playlist…':ok===false?'Criar no '+E(sv)+' (em breve)':'Criar no '+E(sv)}</button>
+ ${ok===false?`<p class="m">O ${E(sv)} ainda não está conectado ao Soundee. Enquanto isso, copie a lista de faixas e importe pelo app do serviço.</p>`:ok===null?'<p class="m">Verificando serviços…</p>':''}
+ ${px&&px.st==='ok'?`<div class="k" role="status"><p class="r" style="gap:8px;color:var(--ac)">${I('check')}<b>Playlist criada no ${E(sv)}</b></p><p class="m">${px.added} de ${px.n} faixas encontradas.</p>${px.url?`<a class="g" style="color:var(--ac);border-color:var(--ac)" href="${E(px.url)}" target="_blank" rel="noopener">Abrir no ${E(sv)}</a>`:''}${(px.missing||[]).length?`<p class="m">Não encontramos: ${px.missing.map(E).join('; ')}</p>`:''}</div>`:px&&px.st==='err'?`<div class="k"><p class="er" role="alert">${E(px.msg)}</p>${px.url?`<a class="g" href="${E(px.url)}" target="_blank" rel="noopener">Abrir no ${E(sv)}</a>`:''}${(px.missing||[]).length?`<p class="m">Não encontramos: ${px.missing.map(E).join('; ')}</p>`:''}</div>`:''}
+ <div class="r" style="gap:10px"><button class="g" style="flex:1" data-a="plsave">${I('check')}Salvar no Soundee</button><button class="g" style="flex:1" data-a="plcopy">${I('send')}Copiar faixas</button></div>
  ${D.pls.name?`<p class="m">Salva: ${E(D.pls.name)} · ${E(D.pls.svc)} · ${ago(D.pls.ts)}</p>`:''}</div>`;}
 const WS=['Perfil','Foto','Bio','Redes','Gêneros'],dots=i=>`<div class="dots" role="img" aria-label="Passo ${i+1} de ${WS.length}">${WS.map((_,k)=>`<i class="${k<=i?'on':''}"></i>`).join('')}</div>`;
 const wzh=(i,t,d)=>`<div class="col">${dots(i)}<div class="r">${i>1?`<button class="g ib" aria-label="Voltar" data-a="wback">${I('back')}</button>`:''}<p class="m">Passo ${i+1} de ${WS.length}</p></div><h2>${t}</h2><p class="m">${d}</p>`;
@@ -559,7 +606,7 @@ async function act(a,v,b,e){S.msg='';if(a!=='del')S.dl=false;if(a!=='sdel')S.del
  else if(a==='chform'){const c=S.ch;S.d={id:c.ids[0],r:c.rate,x:c.draft,m:{...(c.moods||{})}};S.item=c.ids[0];scrollTo(0,0);}
  else if(a==='chpub'){const c=S.ch;if(!c.rate||!c.draft.trim()){S.msg='Escreva a resenha e escolha uma nota.';}else{const items={...((D.rev[me]||{}).items||{})};c.ids.forEach(id=>{items[id]={r:c.rate,x:c.draft.trim(),ts:Date.now(),v:ST(me).vis,m:Object.keys(c.moods||{})};});await put('reviews',{items});S.sh={id:c.ids[0],r:c.rate,x:c.draft.trim(),m:Object.keys(c.moods||{}),th:0};S.ch=CH0();S.q='';S.tab='feed';S.fa=false;S.item=null;S.scr='share';}}
  else if(a==='usr'){S.pi=S.item;S.scr='user';S.pu=v;S.item=null;scrollTo(0,0);}
- else if(a==='scr'){scrollTo(0,0);const bk=S.scr==='user'&&v===''?S.pi:null;S.scr=v;S.item=bk||null;S.pi=null;S.pq='';S.sn=undefined;S.sd=undefined;S.pe=undefined;if(v==='notif'){S.ns=ST(me).seen;saveSet({seen:Date.now()});}}
+ else if(a==='scr'){scrollTo(0,0);const bk=S.scr==='user'&&v===''?S.pi:null;S.scr=v;S.item=bk||null;S.pi=null;S.pq='';S.sn=undefined;S.sd=undefined;S.pe=undefined;if(v==='notif'){S.ns=ST(me).seen;saveSet({seen:Date.now()});}if(v==='pl'){pcfg();S.px=null;}}
  else if(a==='sw')await saveSet({[v]:ST(me)[v]?0:1});
  else if(a==='svis')await saveSet({vis:v});else if(a==='scmt')await saveSet({cmt:v});
  else if(a==='psave'){const e=S.pe||{},p=D.pro[me]||{},n=($('#pen').value||'').trim(),h=($('#peh').value||'').trim().toLowerCase().replace(/^@/,''),bio=($('#peb').value||'').trim().slice(0,160);
@@ -602,7 +649,7 @@ async function act(a,v,b,e){S.msg='';if(a!=='del')S.dl=false;if(a!=='sdel')S.del
  else if(a==='shdone'){S.scr='';S.sh=null;}
  else if(a==='shsave'){await saveImg();return;}else if(a==='shimg'){await shareImg();return;}
  else if(a==='shcp'){try{await navigator.clipboard.writeText(shMsg(S.sh));toast(v==='Instagram'?'Texto copiado. Cole nos Stories.':'Texto copiado');}catch(e){toast('Não foi possível copiar');}return;}
- else if(a==='plrg'){S.pl.seed++;S.pl.rm={};}else if(a==='plrm')S.pl.rm[v]=1;else if(a==='plsv')S.pl.svc=v;
+ else if(a==='plrg'){S.pl.seed++;S.pl.rm={};}else if(a==='plrm')S.pl.rm[v]=1;else if(a==='plsv'){S.pl.svc=v;S.px=null;}else if(a==='pxgo'){pxrun(S.pl.svc);return;}else if(a==='plcopy'){const p=plData(),t=p.name+'\n'+p.all.map((x,i)=>(i+1)+'. '+x.c.t+' — '+(x.c.a||'')).join('\n');try{await navigator.clipboard.writeText(t);toast('Lista de faixas copiada');}catch(e){toast('Não foi possível copiar a lista');}return;}
  else if(a==='plsave'){const p=plData();await put('playlists',{name:p.name,svc:S.pl.svc,ids:p.all.map(x=>x.id),ts:Date.now()});toast('Playlist salva no app');return;}
  else if(a==='setup'){const n=$('#n').value.trim(),h=$('#h').value.trim().toLowerCase();if(!n)S.msg='Digite um nome.';else if(!/^[a-z0-9._]{3,30}$/.test(h))S.msg='Usuário inválido (3 a 30: letras minúsculas, números, . e _).';else if(Object.keys(D.pro).some(u=>D.pro[u].handle===h))S.msg='Esse @ já existe.';else{S.scr='wiz';S.wi=1;S.obd=0;S.wt=Date.now();S.wf=1;scrollTo(0,0);await put('profiles',{name:n,handle:h,country:$('#c').value,col:PAL[h.length%5],ts:Date.now(),ob:1});return;}}
  render();}
@@ -710,7 +757,7 @@ document.addEventListener('keydown',ev=>{const id=ev.target.id||'';if(ev.key==='
 function boot(session){if(!session.user.email_confirmed_at){AU.quiet=true;sb.auth.signOut().then(()=>{AU.e=session.user.email||'';auSent('Confirme seu e-mail para continuar.');});return;}S.su.n=(session.user.user_metadata||{}).full_name||'';user={id:async()=>session.user.id,can:async()=>true};db=dbx;me=session.user.id;
  [['catalog','cat'],['profiles','pro'],['reviews','rev'],['comments','com'],['likes','lik'],['follows','fol'],['saved','sav'],['settings','set'],['market','mkt']].forEach(([c,k])=>sub(c,k));
  setTimeout(()=>{if(!L.pro||!L.cat){S.lt=1;render();}},9000);
- psync();S.nu=location.search&&/[?&](seg|notif)=/.test(location.search)?location.search:null;if(S.nu)history.replaceState(null,'',location.pathname);
+ xback();psync();S.nu=location.search&&/[?&](seg|notif)=/.test(location.search)?location.search:null;if(S.nu)history.replaceState(null,'',location.pathname);
  db.doc('history/'+me).onSnapshot(d=>{D.his=d.exists?d.data():{};render();},()=>{});db.doc('playlists/'+me).onSnapshot(d=>{D.pls=d.exists?d.data():{};render();},()=>{});}
 if(/type=recovery/.test(location.hash))S.rec=1;
 (async()=>{if(!window.supabase){$('#app').innerHTML='<p class="m">Não foi possível carregar o app. Verifique sua conexão e recarregue.</p>';return;}
