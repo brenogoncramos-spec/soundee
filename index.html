@@ -60,6 +60,7 @@ a.g{color:var(--ac);border-color:var(--ac);text-decoration:none}
 @keyframes inn{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
 @keyframes up{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
 @keyframes pulse{50%{opacity:.55}}.bub{max-width:85%;padding:10px 14px;border-radius:16px;font-size:15px;line-height:1.4;animation:up .3s ease both}
+@keyframes fpd{from{transform:translateY(-120%);opacity:0}to{transform:none;opacity:1}}
 @keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 .ht{font-size:24px}
 .rk{font:800 28px/1.2 'Bricolage Grotesque','DM Sans',sans-serif;width:28px;flex:none}
@@ -196,7 +197,7 @@ function card(x,i,cmp){const c=D.cat[x.id];if(!c)return'';const rk=x.u+'|'+x.id,
  return `<div class="k" style="animation-delay:${(i||0)*.06}s"><div class="r"><button class="lk" style="flex:1" aria-label="Abrir ${E(c.t)}" data-a="item" data-v="${E(x.id)}">${cv(c,56)}<span style="min-width:0;flex:1"><b>${E(c.t)}</b><br><span class="m r" style="gap:4px">${I(KI[c.k],'width:14px;height:14px')}${E(c.a||({alb:'Álbum',art:'Artista',mus:'Música'})[c.k])}</span></span></button><button class="g ib" aria-label="Avaliar ${E(c.t)}" data-a="item" data-v="${E(x.id)}">${I('plus')}</button><span class="st" style="font-size:17px">${fr(x.r)}</span></div>${who}${txt}${mo}${trs}${acts}${S.open[rk]?thread(rk):''}</div>`;}
 function setup(){return `<div class="col stg"><div style="margin-top:8px;color:var(--fg)"><h1 style="margin:0">${LOGO(48)}</h1></div>${dots(0)}<p class="m">Passo 1 de 5 · Crie seu perfil para começar.</p><div class="f">${I('user')}<input id="n" maxlength="40" aria-label="Nome" placeholder="Nome" value="${E(S.su.n||'')}"></div><div class="f">${I('chat')}<input id="h" maxlength="30" aria-label="Usuário" placeholder="usuário" autocapitalize="none" autocomplete="off" spellcheck="false" value="${E(S.su.h||'')}"></div><p class="m">3 a 30 caracteres: letras minúsculas, números, . e _</p><div class="f">${I('pin')}<select id="c" aria-label="País" style="padding-left:48px"><option value="BR">Brasil</option><option value="XX" ${S.su.c==='XX'?'selected':''}>Outro país</option></select></div><p class="er" role="alert">${E(S.msg)}</p><button class="b" data-a="setup">Criar perfil${I('arrow')}</button></div>`;}
 function feed(){const a=revs(),fl=(D.fol[me]||{}).ids||[],all=S.fa===undefined?!fl.length:S.fa,sg=sugg(),un=notifs().filter(n=>n.ts>ST(me).seen).length;
- return `<div class="r" style="margin-bottom:14px"><h2 style="flex:1">${all?'Todos':'Minha rede'}</h2><button class="g ib" aria-label="Notificações" data-a="scr" data-v="notif" style="position:relative">${I('bell')}${un?`<span class="bd">${un}</span>`:''}</button></div><div style="margin-bottom:14px">${seg('feed',[['net','Rede','users'],['all','Todos','globe']],all?'all':'net')}</div>
+ return `<div class="r" style="margin-bottom:14px"><h2 style="flex:1">${all?'Todos':'Minha rede'}</h2><button class="g ib" aria-label="Notificações" data-a="scr" data-v="notif" style="position:relative">${I('bell')}${un?`<span class="bd">${un}</span>`:''}</button></div>${(!ST(me).pnd&&['off','install'].includes(pstate()))?`<div class="k" style="margin-bottom:14px"><div class="r" style="gap:12px"><span style="color:var(--ac)">${I('bell')}</span><div style="flex:1"><p style="font-weight:700">Ative as notificações</p><p class="m">Saiba na hora quando alguém seguir ou reagir a você.</p></div></div><div class="r" style="gap:10px"><button class="b" style="flex:1" data-a="pgo">Ativar</button><button class="g" style="flex:1" data-a="pcard">Agora não</button></div></div>`:''}<div style="margin-bottom:14px">${seg('feed',[['net','Rede','users'],['all','Todos','globe']],all?'all':'net')}</div>
  <button class="lk" style="background:var(--card);border-radius:16px;padding:12px;margin-bottom:14px" data-a="scr" data-v="pl"><span style="color:var(--ac)">${I('sparkle')}</span><p style="flex:1;font-weight:500">Playlist com suas reviews</p>${I('arrow')}</button>
  ${sg.length?`<div class="k"><div class="r" style="color:var(--mut)">${I('users')}<p class="m">${fl.length?'Sua rede avaliou':'Em alta no app'}</p></div><div style="display:flex;gap:12px;overflow-x:auto;margin:0 -14px;padding:0 14px">${sg.map(x=>{const c=D.cat[x.id];return `<div style="flex:none;width:200px" class="col"><button class="hero" aria-label="Abrir ${E(c.t)}" data-a="item" data-v="${E(x.id)}" style="height:200px;border-radius:16px;${c.img?`background:linear-gradient(rgba(0,0,0,.15),rgba(0,0,0,.55)),url('${E(c.img)}') center/cover;color:#fff`:`background:${E(c.col)};color:${ink(c.col)}`}"><i style="right:-40px;bottom:-50px;width:160px;height:160px"></i><h3 style="font-size:24px;max-width:80%">${E(c.t)}</h3><span class="chip" style="left:14px;bottom:14px">${f1(x.a)}</span></button><p class="m" style="font-size:12px">${x.us.slice(0,2).map(nm).join(', ')}${x.us.length>2?' +'+(x.us.length-2):''}</p></div>`;}).join('')}</div></div>`:''}
  ${a.map(x=>card(x)).join('')||'<div class="k" style="align-items:center;text-align:center;color:var(--mut)">'+I('disc','width:44px;height:44px')+'<p>Ainda não há reviews. Toque em Avaliar e escreva a primeira.</p></div>'}`;}
@@ -268,6 +269,43 @@ const socials=l=>Object.keys(SOC).map(k=>{const u=lnk(k,(l||{})[k]);return u?`<a
 const ST=u=>({priv:0,vis:'public',cmt:'all',nl:1,nc:1,nf:1,seen:0,...(D.set[u]||{})});
 const vis=(u,it)=>{if(u===me)return true;const fl=(D.fol[me]||{}).ids||[],v=it.v||'public';if(v==='private')return false;return(v==='followers'||ST(u).priv)?fl.includes(u):true;};
 const saveSet=p=>put('settings',{...ST(me),...p});
+/* ===== Notificações do aparelho (Web Push) e aviso de novo seguidor ===== */
+const IOS=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1),STANDALONE=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true,PUSH_API=()=>'serviceWorker' in navigator&&'PushManager' in window&&'Notification' in window;
+function pstate(){if(IOS&&!STANDALONE())return 'install';if(!PUSH_API())return 'nosupport';if(Notification.permission==='denied')return 'blocked';return S.pon?'on':'off';}
+const u8=x=>Uint8Array.from(atob(x.replace(/-/g,'+').replace(/_/g,'/')),c=>c.charCodeAt(0));
+async function pkey(){if(S.vk)return S.vk;const{data,error}=await sb.functions.invoke('notify',{body:{type:'key'}});if(error||!data||!data.pub)throw new Error('o serviço de notificações está indisponível');return S.vk=data.pub;}
+async function psave(sub){const j=sub.toJSON(),{error}=await sb.from('push_subs').upsert({endpoint:j.endpoint,user_id:me,sub:j,ua:navigator.userAgent.slice(0,200)},{onConflict:'endpoint'});if(error)throw error;}
+async function pon(){const perm=await Notification.requestPermission();if(perm!=='granted'){S.pmsg=perm==='denied'?'':'Você não permitiu as notificações.';return;}
+ try{const reg=await navigator.serviceWorker.ready;let sub=await reg.pushManager.getSubscription();if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:u8(await pkey())});await psave(sub);S.pon=1;S.pmsg='';}
+ catch(e){console.error('push',e);S.pmsg='Não foi possível ativar agora ('+((e&&e.message)||'erro')+'). Tente de novo.';}}
+async function poff(){try{const reg=await navigator.serviceWorker.ready,sub=await reg.pushManager.getSubscription();if(sub){await sb.from('push_subs').delete().eq('endpoint',sub.endpoint);await sub.unsubscribe();}}catch(e){console.error(e);}S.pon=0;}
+async function psync(){if(!PUSH_API()||Notification.permission!=='granted')return;try{const reg=await navigator.serviceWorker.ready,sub=await reg.pushManager.getSubscription();if(sub){await psave(sub);S.pon=1;render();}}catch(e){}}
+const pnotify=(type,to,id)=>{if(!to||to===me)return;try{Promise.resolve(sb.functions.invoke('notify',{body:{type,to,id:id||''}})).catch(()=>{});}catch(e){}};
+function ativ(){const st=pstate(),row=(ic,t)=>`<div class="r" style="gap:14px"><span style="color:var(--ac)">${I(ic)}</span><p style="flex:1">${t}</p></div>`,msg=S.pmsg?`<p class="m" style="color:var(--er)" role="alert">${E(S.pmsg)}</p>`:'';
+ let cta;
+ if(st==='on')cta=`<div class="k"><p class="r" style="gap:8px;color:var(--ac)">${I('check')}<b>Notificações ativas neste aparelho</b></p><p class="m">Você pode escolher o que receber em Ajustes.</p></div><button class="b" data-a="pdone">${I('check')}Concluir</button><button class="g" data-a="poff">Desativar neste aparelho</button>`;
+ else if(st==='install')cta=`<div class="k"><p><b>Primeiro, instale o Soundee no iPhone</b></p><ol style="padding-left:20px;display:flex;flex-direction:column;gap:6px"><li>Toque em Compartilhar, na barra do Safari.</li><li>Escolha Adicionar à Tela de Início.</li><li>Abra o Soundee pelo ícone e ative as notificações aqui.</li></ol></div><button class="g" data-a="pskip">Agora não</button>`;
+ else if(st==='blocked')cta=`<div class="k"><p><b>As notificações estão bloqueadas</b></p><p class="m">Libere em Ajustes do aparelho ou nas configurações do site, permita notificações do Soundee e volte aqui.</p></div><button class="b" data-a="pret">${I('bell')}Já liberei, verificar</button><button class="g" data-a="pskip">Agora não</button>`;
+ else if(st==='nosupport')cta=`<div class="k"><p><b>Este navegador não envia notificações</b></p><p class="m">Você continua vendo os avisos dentro do app, em Notificações.</p></div><button class="g" data-a="pskip">Voltar</button>`;
+ else cta=`${msg}<button class="b" data-a="pon">${I('bell')}Ativar notificações</button><button class="g" data-a="pskip">Agora não</button>`;
+ return `<div class="col"><div class="r"><button class="g ib" aria-label="Voltar" data-a="pdone">${I('back')}</button><h2 class="ht">Notificações</h2></div>
+ <div style="text-align:center;padding:12px 0"><span style="display:inline-flex;align-items:center;justify-content:center;width:84px;height:84px;border-radius:50%;background:var(--ac);color:var(--on)">${I('bell','width:40px;height:40px')}</span><h2 style="margin-top:14px">Fique por dentro</h2><p class="m" style="margin-top:6px">Receba um aviso no aparelho, mesmo com o app fechado.</p></div>
+ <div class="k">${row('userplus','Quando alguém seguir você')}${row('heart','Quando reagirem às suas reviews')}${row('chat','Quando comentarem ou responderem você')}</div>${cta}</div>`;}
+function fwCheck(){if(!me||!L.fol||!L.set||!L.pro||S.tour!=null||S.rec||D.pro[me]&&D.pro[me].ob)return;
+ const fw={};for(const u in D.fol)if(u!==me&&((D.fol[u].ids)||[]).includes(me))fw[u]=((D.fol[u].at)||{})[me]||0;
+ const nf=ST(me).nf;
+ if(!S.fk){S.fk={};const fs=(D.set[me]||{}).fseen,base=fs===undefined?Date.now():fs;for(const u in fw){S.fk[u]=fw[u];if(nf&&fw[u]>base)fq(u);}if(fs===undefined)saveSet({fseen:Date.now()});}
+ else for(const u in fw)if(!(u in S.fk)||fw[u]>S.fk[u]){S.fk[u]=fw[u];if(nf)fq(u);}
+ if(S.nu){const x=S.nu;S.nu=null;goUrl(x);}}
+function goUrl(x){try{const q=new URL(x,location.origin).searchParams,seg=q.get('seg');if(seg&&D.pro[seg]){S.fqu=[seg].concat(S.fqu||[]);if(!S.fshow)fnext();}else if(q.get('notif')){S.scr='notif';S.item=null;S.ns=ST(me).seen;saveSet({seen:Date.now()});render();}}catch(e){}}
+function fq(u){S.fqu=S.fqu||[];if(!S.fqu.includes(u))S.fqu.push(u);clearTimeout(S.fsd);S.fsd=setTimeout(()=>saveSet({fseen:Date.now()}),600);if(!S.fshow)fnext();}
+function fnext(){const u=(S.fqu||[]).shift();if(!u){S.fshow=0;return;}S.fshow=1;const old=$('#fpop');if(old)old.remove();
+ const el=document.createElement('div');el.id='fpop';el.setAttribute('role','status');el.setAttribute('aria-live','polite');el.style.cssText='position:fixed;left:0;right:0;top:0;z-index:30;display:flex;justify-content:center;padding:calc(env(safe-area-inset-top,0px) + 10px) 12px 0;pointer-events:none';
+ let tm;const close=()=>{clearTimeout(tm);document.removeEventListener('keydown',kd,true);el.remove();setTimeout(fnext,250);},arm=ms=>{clearTimeout(tm);tm=setTimeout(close,ms);},kd=e=>{if(e.key==='Escape')close();};
+ const fl=()=>((D.fol[me]||{}).ids||[]).includes(u),draw=()=>{el.innerHTML=`<div class="fp" style="pointer-events:auto;width:100%;max-width:440px;background:var(--card);color:var(--fg);border:1px solid var(--l2);border-radius:20px;padding:14px;box-shadow:0 12px 32px rgba(0,0,0,.35);display:flex;flex-direction:column;gap:12px;animation:fpd .35s both"><div class="r" style="gap:12px">${av(u,44)}<div style="min-width:0;flex:1"><p class="m" style="font-size:12px">Novo seguidor</p><p style="font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${E(nm(u))}</p><p class="m">${E(hd(u))}</p></div></div>${fl()?`<div class="r" style="gap:10px"><p class="r" style="gap:6px;flex:1;color:var(--ac)">${I('check')}Você segue ${E(nm(u).split(' ')[0])}</p><button class="g" data-f="no" style="min-height:44px">Fechar</button></div>`:`<div class="r" style="gap:10px"><button class="b" style="flex:1" data-f="yes">${I('userplus')}Seguir</button><button class="g" style="flex:1" data-f="no">Agora não</button></div>`}</div>`;};
+ draw();document.body.appendChild(el);document.addEventListener('keydown',kd,true);arm(15000);
+ el.addEventListener('pointerenter',()=>clearTimeout(tm));el.addEventListener('focusin',()=>clearTimeout(tm));el.addEventListener('pointerleave',()=>arm(6000));
+ el.addEventListener('click',async e=>{const b=e.target.closest('[data-f]');if(!b)return;if(b.dataset.f==='no'){close();return;}b.disabled=true;await act('follow',u);draw();arm(1600);});}
 const canCom=a=>{if(a===me)return true;const c=ST(a).cmt;return c==='all'||(c==='fol'&&((D.fol[me]||{}).ids||[]).includes(a));};
 const ago=t=>{if(!t)return'';const m=Math.max(1,Math.round((Date.now()-t)/6e4));return m<60?m+' min':m<1440?Math.round(m/60)+' h':Math.round(m/1440)+' d';};
 function toast(t,ms){S.toast=t;render();clearTimeout(S._t);S._t=setTimeout(()=>{S.toast='';render();},ms||1800);}
@@ -299,7 +337,7 @@ function sets(){const s=ST(me),p=D.pro[me]||{},hp={public:'Todos podem ver',foll
  <div class="col" style="gap:8px"><p class="m">Redes sociais</p>${Object.keys(SOC).map(k=>`<div class="f"><svg class="bi" style="position:absolute;left:14px;top:12px;width:26px;height:26px" aria-hidden="true"><use href="#${SOC[k][1]}"/></svg><input id="sl-${k}" data-sd="${k}" maxlength="120" autocapitalize="none" autocomplete="off" spellcheck="false" aria-label="${SOC[k][0]}" placeholder="${SOC[k][0]}: @usuário ou link" value="${E(S.sd&&S.sd[k]!==undefined?S.sd[k]:((p.links||{})[k]||''))}"></div>`).join('')}<p class="m">Os links aparecem no seu perfil e levam para fora do Soundee. O app não confirma que a conta é sua.</p></div>
  <button class="b" data-a="ssave">${I('check')}Salvar</button></div>
  <div class="k"><div class="r" style="color:var(--mut)">${I('lock')}<p class="m">Privacidade das reviews</p></div>${seg('svis',[['public','Público','globe'],['followers','Seguidores','users'],['private','Só eu','lock']],s.vis)}<p class="m">${hp[s.vis]}</p>${sw('priv','lock','Perfil privado')}<p class="m r" style="gap:6px">${I('chat','width:16px;height:16px')}Quem pode comentar</p>${seg('scmt',[['all','Todos','globe'],['fol','Quem sigo','users'],['none','Ninguém','lock']],s.cmt)}</div>
- <div class="k"><div class="r" style="color:var(--mut)">${I('bell')}<p class="m">Notificações</p></div>${sw('nl','heart','Curtidas')}${sw('nc','chat','Comentários')}${sw('nf','userplus','Novos seguidores')}</div>
+ <div class="k"><div class="r" style="color:var(--mut)">${I('bell')}<p class="m">Notificações</p></div>${(()=>{const st=pstate(),tx={on:'Ativadas neste aparelho',off:'Desativadas neste aparelho',blocked:'Bloqueadas no navegador',install:'Instale o app para ativar',nosupport:'Indisponível neste navegador'};return `<button class="lk" data-a="pgo">${I('bell')}<span style="flex:1"><p>Notificações no aparelho</p><p class="m">${tx[st]}</p></span>${I('arrow','width:16px;height:16px')}</button>`;})()}${sw('nl','heart','Curtidas')}${sw('nc','chat','Comentários')}${sw('nf','userplus','Novos seguidores')}</div>
  <button class="g" data-a="tour">${I('sparkle')}Ver o tour do app de novo</button>
  <button class="g" data-a="logout">${I('logout')}Sair da conta</button>
  <button class="g" style="color:var(--er)" data-a="sdel">${I('x')}${S.del?'Confirmar: apagar tudo':'Apagar meus dados'}</button></div>`;}
@@ -448,11 +486,11 @@ addEventListener('popstate',e=>{if(S.tour!=null||S.scr==='wiz'||S.rec||!me)retur
 const recView=()=>`<div class="col"><div style="margin-top:8px;color:var(--fg)"><h1 style="margin:0">${LOGO(48)}</h1></div><h2 class="ht">Nova senha</h2><p class="m">Escolha uma senha nova para entrar no Soundee.</p><div class="f">${I('lock')}<input id="rp1" type="password" autocomplete="new-password" aria-label="Nova senha" placeholder="Nova senha (mínimo 8 caracteres)"></div><div class="f">${I('lock')}<input id="rp2" type="password" autocomplete="new-password" aria-label="Repita a nova senha" placeholder="Repita a nova senha"></div><p class="er" role="alert">${E(S.msg)}</p><button class="b" data-a="recset">Salvar nova senha${I('check')}</button></div>`;
 const errView=()=>`<div class="col" style="align-items:center;text-align:center;padding-top:72px;color:var(--mut)">${I('refresh','width:44px;height:44px')}<h2 style="color:var(--fg)">Não foi possível carregar</h2><p class="m">Verifique sua conexão e tente de novo.</p><button class="b" data-a="reload">Tentar de novo</button></div>`;
 function render(){const app=$('#app');if(S.rec){if(!$('#rp1')||S.msg)app.innerHTML=recView();return;}if(!L.pro||!L.cat){if(S.lt||S.msg)app.innerHTML=errView();return;}if(S.drag&&Date.now()-S.drag<10000){S.pend=1;return;}S.drag=0;
- if(!D.pro[me]){app.innerHTML=setup();return;}
+ if(!D.pro[me]){app.innerHTML=setup();return;}fwCheck();
  if(D.pro[me].ob&&!S.obd&&S.scr!=='wiz'&&S.tour==null){S.scr='wiz';S.wi=S.wi||1;}
  const wz=S.scr==='wiz';
  const ae=document.activeElement,kid=ae&&/^(INPUT|TEXTAREA)$/.test(ae.tagName)?(ae.id?'#'+ae.id:ae.dataset.ck?'[data-ck="'+ae.dataset.ck+'"]':null):null;
- const body=wz?wiz():S.scr==='prod'?prodv():S.scr==='share'&&S.sh?share():S.scr==='pl'?plv():S.scr==='net'?netv():S.scr==='user'?person():S.scr==='notif'?notif():S.scr==='ppl'?people():S.scr==='set'?sets():S.scr==='pedit'?pedit():S.item?item():S.tab==='feed'?feed():S.tab==='search'?search():S.tab==='rank'?rank():S.tab==='shop'?shop():profile();
+ const body=wz?wiz():S.scr==='prod'?prodv():S.scr==='share'&&S.sh?share():S.scr==='pl'?plv():S.scr==='net'?netv():S.scr==='user'?person():S.scr==='notif'?notif():S.scr==='ppl'?people():S.scr==='set'?sets():S.scr==='pedit'?pedit():S.scr==='ativ'?ativ():S.item?item():S.tab==='feed'?feed():S.tab==='search'?search():S.tab==='rank'?rank():S.tab==='shop'?shop():profile();
  const T=[['feed','Feed','home'],['shop','Loja','bag'],['search','Avaliar','plus'],['rank','Ranking','chart'],['me','Perfil','user']],cur=S.item?S.tab:S.tab;
  app.innerHTML=(S.ro&&!wz?'<div class="k" style="color:var(--er)">Modo somente leitura: peça acesso de Contribuidor para avaliar e comentar.</div>':'')+`<div role="main" style="display:contents"${S.tour!=null?' inert':''}>${body}</div>`+(wz?'':`<nav class="${S.tour!=null?'tn':''}" ${S.tour!=null?'inert':''}><div>${T.map(([k,l,ic])=>`<button data-a="tab" data-v="${k}" aria-label="${l}${k==='shop'?' (em breve)':''}" aria-current="${!S.item&&!S.scr&&S.tab===k?'page':'false'}" class="${k==='search'?'pl':!S.item&&!S.scr&&S.tab===k?'on':''}${S.tour!=null&&TOUR[S.tour].hl===k?' hl':''}">${I(ic,'width:26px;height:26px')}${l}</button>`).join('')}</div></nav>`)+(S.toast?`<div class="toast" role="status" aria-live="polite">${E(S.toast)}</div>`:'')+ovl()+(S.tour!=null&&!wz?tourUI():'');
  if(kid){try{const q=$(kid);if(q){q.focus();q.setSelectionRange(q.value.length,q.value.length);}}catch(e){}}
@@ -489,14 +527,14 @@ async function act(a,v,b,e){S.msg='';if(a!=='del')S.dl=false;if(a!=='sdel')S.del
  else if(a==='po'){const i=v.lastIndexOf('|');S.po[v.slice(0,i)]=+v.slice(i+1);}
  else if(a==='rxp')S.rp[v]=!S.rp[v];
  else if(a==='lp')S.lp[v]=!S.lp[v];
- else if(a==='rx'){const i=v.lastIndexOf('|'),rk=v.slice(0,i),t=v.slice(i+1),m={...((D.lik[me]||{}).m||{})};(m[rk]&&rxv(m[rk]).t===t)?delete m[rk]:m[rk]={t,ts:Date.now()};S.rp[rk]=false;await put('likes',{m});}
+ else if(a==='rx'){const i=v.lastIndexOf('|'),rk=v.slice(0,i),t=v.slice(i+1),m={...((D.lik[me]||{}).m||{})},was=m[rk]&&rxv(m[rk]).t===t;was?delete m[rk]:m[rk]={t,ts:Date.now()};S.rp[rk]=false;if(await put('likes',{m})&&!was)pnotify('like',rk.split('|')[0],rk.split('|')[1]);}
  else if(a==='rvfav'){const o=D.sav[me]||{},s2={fav:{...(o.fav||{})},later:{...(o.later||{})},rv:{...(o.rv||{})}};s2.rv[v]?delete s2.rv[v]:s2.rv[v]=Date.now();await put('saved',s2);}
  else if(a==='like'){const m={...((D.lik[me]||{}).m||{})};m[v]?delete m[v]:m[v]=Date.now();await put('likes',{m});}
- else if(a==='follow'){let ids=[...((D.fol[me]||{}).ids||[])];const at={...((D.fol[me]||{}).at||{})};if(ids.includes(v)){ids=ids.filter(x=>x!==v);delete at[v];}else{ids=[...ids,v];at[v]=Date.now();}await put('follows',{ids,at});}
+ else if(a==='follow'){let add=0,ids=[...((D.fol[me]||{}).ids||[])];const at={...((D.fol[me]||{}).at||{})};if(ids.includes(v)){ids=ids.filter(x=>x!==v);delete at[v];}else{ids=[...ids,v];at[v]=Date.now();add=1;}if(await put('follows',{ids,at})&&add)pnotify('follow',v);}
  else if(a==='fav'||a==='later'){const s={fav:{...((D.sav[me]||{}).fav||{})},later:{...((D.sav[me]||{}).later||{})},rv:{...((D.sav[me]||{}).rv||{})}};s[a][S.item]?delete s[a][S.item]:s[a][S.item]=1;await put('saved',s);}
  else if(a==='save'){const x=$('#rv').value.trim();if(!S.d.r){S.msg='Escolha uma nota.';}else{const items={...((D.rev[me]||{}).items||{})};const mk=Object.keys(S.d.m||{});items[S.item]={r:S.d.r,x,ts:Date.now(),v:ST(me).vis,m:mk,...(S.d.fv&&D.cat[S.d.fv]?{fv:S.d.fv}:{})};S.busy=1;render();const ok=await put('reviews',{items});S.busy=0;if(!ok){S.msg='Não foi possível publicar: '+S.lastErr;render();return;}S.sh={id:S.item,r:S.d.r,x,m:mk,th:0,fv:S.d.fv&&D.cat[S.d.fv]?D.cat[S.d.fv].t:''};S.item=null;S.tab='feed';S.fa=false;S.scr='share';}}
  else if(a==='del'){if(!S.dl)S.dl=true;else{S.dl=false;const items={...((D.rev[me]||{}).items||{})};delete items[S.item];S.d=null;await put('reviews',{items});}}
- else if(a==='com'){const x=b.parentNode.querySelector('input').value.trim();if(!x)return;const rk=v,list=[...((D.com[me]||{}).list||[]),{id:'c'+Date.now().toString(36),rk,p:S.rep[rk]||null,x:x.slice(0,500),ts:Date.now()}];S.rep[rk]=null;S.cd[rk]='';await put('comments',{list});}
+ else if(a==='com'){const x=b.parentNode.querySelector('input').value.trim();if(!x)return;const rk=v,list=[...((D.com[me]||{}).list||[]),{id:'c'+Date.now().toString(36),rk,p:S.rep[rk]||null,x:x.slice(0,500),ts:Date.now()}];S.rep[rk]=null;S.cd[rk]='';if(await put('comments',{list}))pnotify('comment',rk.split('|')[0],rk.split('|')[1]);}
  else if(a==='chgo'){const c=S.ch;if(c.on){const t=c.in.trim();if(!t)return;c.in='';userSay(t);return;}const q=S.q.trim();if(!q)return;S.ch=CH0();S.ch.on=true;S.q='';userSay(q);return;}
  else if(a==='chchip'){userSay(v);return;}
  else if(a==='chx')S.ch=CH0();
@@ -513,7 +551,7 @@ async function act(a,v,b,e){S.msg='';if(a!=='del')S.dl=false;if(a!=='sdel')S.del
  else if(a==='psave'){const e=S.pe||{},p=D.pro[me]||{},n=($('#pen').value||'').trim(),h=($('#peh').value||'').trim().toLowerCase().replace(/^@/,''),bio=($('#peb').value||'').trim().slice(0,160);
   if(!n){toast('Digite um nome.');return;}if(!/^[a-z0-9._]{3,30}$/.test(h)){toast('Usuário inválido. Use 3 a 30 letras minúsculas, números, . ou _',4000);return;}if(Object.keys(D.pro).some(u=>u!==me&&D.pro[u].handle===h)){toast('Esse @ já existe.');return;}
   const pr={...p,name:n,handle:h,bio};if(!bio)delete pr.bio;if(!await put('profiles',pr))return;S.pe=undefined;S.scr='';scrollTo(0,0);toast('Perfil atualizado');render();return;}
- else if(a==='logout'){await sb.auth.signOut();location.reload();return;}
+ else if(a==='logout'){try{const reg=await navigator.serviceWorker.ready,sub=await reg.pushManager.getSubscription();if(sub)await sb.from('push_subs').delete().eq('endpoint',sub.endpoint);}catch(e){}await sb.auth.signOut();location.reload();return;}
  else if(a==='sdel'){if(!S.del)S.del=true;else{S.del=false;S.d=null;for(const c of ['reviews','comments','likes','follows','saved','settings','profiles','history','playlists']){try{await db.doc(c+'/'+me).delete();}catch(e){}}S.scr='';S.tab='feed';}}
  else if(a==='imp'){if(S.imp[v])S.imp[v]=0;else{S.isrc=v;S.imps='consent';}}
  else if(a==='deny')S.imps=null;
@@ -534,8 +572,15 @@ async function act(a,v,b,e){S.msg='';if(a!=='del')S.dl=false;if(a!=='sdel')S.del
    else if(i===3&&S.wl){const l={};for(const k of Object.keys(SOC)){const x=(S.wl[k]!==undefined?S.wl[k]:((D.pro[me].links||{})[k]||'')).trim();if(!x)continue;if(!lnk(k,x)){S.msg='Link inválido em '+SOC[k][0]+'. Use @usuário ou o link do perfil.';ok=false;break;}l[k]=x;}if(ok)ok=await wsave({links:l});}
    else if(i===4){const g=Object.keys(S.og).filter(k=>S.og[k]);if(g.length<3){S.msg='Escolha pelo menos 3 gêneros ou toque em Agora não.';ok=false;}else{await wfinish(g);return;}}}
   if(ok){if(i>=4){await wfinish();return;}S.wi=i+1;S.wt=Date.now();S.wf=1;scrollTo(0,0);}}finally{S.wlk=0;}}
- else if(a==='tnext'){const k=S.tour+1;if(k>=TOUR.length){S.tour=null;S.tab='feed';S.item=null;S.scr='';}else{S.tour=k;S.tf=1;const t=TOUR[k].tab;if(t){S.tab=t;S.item=null;S.scr='';}}scrollTo(0,0);}
- else if(a==='tskip'){S.tour=null;S.tab='feed';S.item=null;S.scr='';scrollTo(0,0);}
+ else if(a==='tnext'){const k=S.tour+1;if(k>=TOUR.length){S.tour=null;S.tab='feed';S.item=null;S.scr=(!ST(me).pnd&&['off','install'].includes(pstate()))?'ativ':'';}else{S.tour=k;S.tf=1;const t=TOUR[k].tab;if(t){S.tab=t;S.item=null;S.scr='';}}scrollTo(0,0);}
+ else if(a==='tskip'){S.tour=null;S.tab='feed';S.item=null;S.scr=(!ST(me).pnd&&['off','install'].includes(pstate()))?'ativ':'';scrollTo(0,0);}
+ else if(a==='pon'){S.pmsg='';await pon();}
+ else if(a==='poff'){await poff();}
+ else if(a==='pret'){}
+ else if(a==='pskip'){S.scr='';scrollTo(0,0);saveSet({pnd:1});}
+ else if(a==='pdone'){S.scr='';scrollTo(0,0);}
+ else if(a==='pgo'){S.scr='ativ';S.pmsg='';scrollTo(0,0);}
+ else if(a==='pcard'){saveSet({pnd:1});}
  else if(a==='tour'){S.scr='';S.item=null;S.tab='feed';S.tour=0;S.tf=1;scrollTo(0,0);}
  else if(a==='sth')S.sh.th=+v;
  else if(a==='shed'){S.scr='';S.item=S.sh.id;S.tab='feed';}
@@ -623,10 +668,12 @@ document.addEventListener('keydown',ev=>{const id=ev.target.id||'';if(ev.key==='
 function boot(session){if(!session.user.email_confirmed_at){AU.quiet=true;sb.auth.signOut().then(()=>{AU.e=session.user.email||'';auSent('Confirme seu e-mail para continuar.');});return;}S.su.n=(session.user.user_metadata||{}).full_name||'';user={id:async()=>session.user.id,can:async()=>true};db=dbx;me=session.user.id;
  [['catalog','cat'],['profiles','pro'],['reviews','rev'],['comments','com'],['likes','lik'],['follows','fol'],['saved','sav'],['settings','set'],['market','mkt']].forEach(([c,k])=>sub(c,k));
  setTimeout(()=>{if(!L.pro||!L.cat){S.lt=1;render();}},9000);
+ psync();S.nu=location.search&&/[?&](seg|notif)=/.test(location.search)?location.search:null;if(S.nu)history.replaceState(null,'',location.pathname);
  db.doc('history/'+me).onSnapshot(d=>{D.his=d.exists?d.data():{};render();},()=>{});db.doc('playlists/'+me).onSnapshot(d=>{D.pls=d.exists?d.data():{};render();},()=>{});}
 if(/type=recovery/.test(location.hash))S.rec=1;
 (async()=>{if(!window.supabase){$('#app').innerHTML='<p class="m">Não foi possível carregar o app. Verifique sua conexão e recarregue.</p>';return;}
  const{data:{session}}=await sb.auth.getSession();if(session)boot(session);else authView();
  sb.auth.onAuthStateChange((ev)=>{if(ev==='PASSWORD_RECOVERY'){S.rec=1;render();}if(ev==='SIGNED_OUT'&&!AU.quiet)location.reload();});})();
+if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(e.data&&e.data.type==='nav'&&me){S.nu=e.data.url;render();}});
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost'))addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
 </script></body></html>
