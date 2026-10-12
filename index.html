@@ -262,9 +262,11 @@ function profile(){const p=D.pro[me]||{},fl=(D.fol[me]||{}).ids||[],fw=Object.ke
  ${(p.genres||[]).length?`<div class="r" style="flex-wrap:wrap;gap:8px">${p.genres.map(g=>`<span class="g" style="min-height:30px;font-size:12px">${E(g)}</span>`).join('')}</div>`:''}<div class="r" style="justify-content:space-between">${st('file',Object.keys(my).length,'Avaliações')}${st('users',fw,'Seguidores','fol')}${st('user',fl.length,'Seguindo','ing')}</div>
  ${seg('pt',[['rev','Avaliações','file'],['fav','Favoritos','heart'],['later','Lista','bookmark'],['ppl','Pessoas','userplus']],S.pt)}<div class="col">${body||emp}</div></div>`;}
 const SOC={instagram:['Instagram','instagram','instagram.com',h=>'https://www.instagram.com/'+h],facebook:['Facebook','facebook','facebook.com',h=>'https://www.facebook.com/'+h],tiktok:['TikTok','tiktok','tiktok.com',h=>'https://www.tiktok.com/@'+h],youtube:['YouTube','youtube','youtube.com',h=>'https://www.youtube.com/@'+h],spotify:['Spotify','spotify','open.spotify.com',h=>'https://open.spotify.com/user/'+h]};
-function lnk(k,v){v=String(v||'').trim();if(!v)return null;const d=SOC[k][2];
- if(/^https?:\/\//i.test(v)){try{const u=new URL(v);return u.protocol==='https:'&&(u.hostname===d||u.hostname.endsWith('.'+d)||(k==='youtube'&&u.hostname==='youtu.be'))?u.href:null;}catch(e){return null;}}
- const h=v.replace(/^@/,'');return /^[A-Za-z0-9._-]{1,60}$/.test(h)?SOC[k][3](h):null;}
+function lnkp(k,v){v=String(v||'').normalize('NFKC').replace(/[​-‍⁠﻿]/g,'').trim();if(!v)return null;const d=SOC[k][2],hosts=[d].concat(k==='youtube'?['youtu.be']:[]);
+ const okHost=h=>hosts.some(x=>h===x||h.endsWith('.'+x)),bare=v.replace(/^@\s*/,'');
+ if(/^https?:\/\//i.test(v)||/^([a-z0-9-]+\.)*[a-z0-9-]+\.[a-z]{2,}(\/|$)/i.test(bare)&&okHost(bare.split('/')[0].toLowerCase())){try{const u=new URL(/^https?:\/\//i.test(v)?v.replace(/^http:/i,'https:'):'https://'+bare);if(!okHost(u.hostname))return null;if(!['youtube','facebook'].includes(k))u.search='';u.hash='';if(u.pathname.replace(/\/+$/,'')===''&&!u.search)return null;return{url:u.href,val:u.href};}catch(e){return null;}}
+ const h=bare.replace(/\/+$/,'');return /^[A-Za-z0-9._-]{1,60}$/.test(h)?{url:SOC[k][3](h),val:'@'+h}:null;}
+const lnk=(k,v)=>(lnkp(k,v)||{}).url||null,lnkErr=k=>'Não reconheci o '+SOC[k][0]+'. Escreva só o @usuário (por exemplo, @soundee) ou cole o link do perfil.';
 const socials=l=>Object.keys(SOC).map(k=>{const u=lnk(k,(l||{})[k]);return u?`<a class="g ib" href="${E(u)}" target="_blank" rel="noopener noreferrer" aria-label="${SOC[k][0]} (abre em nova aba)"><svg class="bi" style="width:22px;height:22px" aria-hidden="true"><use href="#${SOC[k][1]}"/></svg></a>`:'';}).join('');
 const ST=u=>({priv:0,vis:'public',cmt:'all',nl:1,nc:1,nf:1,seen:0,...(D.set[u]||{})});
 const vis=(u,it)=>{if(u===me)return true;const fl=(D.fol[me]||{}).ids||[],v=it.v||'public';if(v==='private')return false;return(v==='followers'||ST(u).priv)?fl.includes(u):true;};
@@ -545,7 +547,7 @@ async function act(a,v,b,e){S.msg='';if(a!=='del')S.dl=false;if(a!=='sdel')S.del
  else if(a==='scr'){scrollTo(0,0);const bk=S.scr==='user'&&v===''?S.pi:null;S.scr=v;S.item=bk||null;S.pi=null;S.pq='';S.sn=undefined;S.sd=undefined;S.pe=undefined;if(v==='notif'){S.ns=ST(me).seen;saveSet({seen:Date.now()});}}
  else if(a==='sw')await saveSet({[v]:ST(me)[v]?0:1});
  else if(a==='svis')await saveSet({vis:v});else if(a==='scmt')await saveSet({cmt:v});
- else if(a==='ssave'){const links={};for(const k of Object.keys(SOC)){const v=($('#sl-'+k).value||'').trim();if(!v)continue;if(!lnk(k,v)){toast('Link inválido em '+SOC[k][0]+'. Use @usuário ou o link do perfil.',4000);return;}links[k]=v;}
+ else if(a==='ssave'){const links={};for(const k of Object.keys(SOC)){const v=($('#sl-'+k).value||'').trim();if(!v)continue;const r=lnkp(k,v);if(!r){toast(lnkErr(k),5000);return;}links[k]=r.val;}
   const pr={...D.pro[me],country:$('#sc').value,links};if(!Object.keys(links).length)delete pr.links;
   if(!await put('profiles',pr))return;S.sd=undefined;toast('Ajustes salvos');return;}
  else if(a==='psave'){const e=S.pe||{},p=D.pro[me]||{},n=($('#pen').value||'').trim(),h=($('#peh').value||'').trim().toLowerCase().replace(/^@/,''),bio=($('#peb').value||'').trim().slice(0,160);
@@ -569,7 +571,7 @@ async function act(a,v,b,e){S.msg='';if(a!=='del')S.dl=false;if(a!=='sdel')S.del
  else if(a==='wskip'||a==='wnext'){if(S.wlk||Date.now()-(S.wt||0)<500)return;S.wlk=1;try{const i=S.wi||1,sk=a==='wskip';let ok=true;
   if(!sk){if(i===1&&S.wph!==undefined)ok=await wsave({photo:S.wph});
    else if(i===2&&S.wb!==undefined)ok=await wsave({bio:S.wb.trim().slice(0,160)});
-   else if(i===3&&S.wl){const l={};for(const k of Object.keys(SOC)){const x=(S.wl[k]!==undefined?S.wl[k]:((D.pro[me].links||{})[k]||'')).trim();if(!x)continue;if(!lnk(k,x)){S.msg='Link inválido em '+SOC[k][0]+'. Use @usuário ou o link do perfil.';ok=false;break;}l[k]=x;}if(ok)ok=await wsave({links:l});}
+   else if(i===3&&S.wl){const l={};for(const k of Object.keys(SOC)){const x=(S.wl[k]!==undefined?S.wl[k]:((D.pro[me].links||{})[k]||'')).trim();if(!x)continue;const r=lnkp(k,x);if(!r){S.msg=lnkErr(k);ok=false;break;}l[k]=r.val;}if(ok)ok=await wsave({links:l});}
    else if(i===4){const g=Object.keys(S.og).filter(k=>S.og[k]);if(g.length<3){S.msg='Escolha pelo menos 3 gêneros ou toque em Agora não.';ok=false;}else{await wfinish(g);return;}}}
   if(ok){if(i>=4){await wfinish();return;}S.wi=i+1;S.wt=Date.now();S.wf=1;scrollTo(0,0);}}finally{S.wlk=0;}}
  else if(a==='tnext'){const k=S.tour+1;if(k>=TOUR.length){S.tour=null;S.tab='feed';S.item=null;S.scr=(!ST(me).pnd&&['off','install'].includes(pstate()))?'ativ':'';}else{S.tour=k;S.tf=1;const t=TOUR[k].tab;if(t){S.tab=t;S.item=null;S.scr='';}}scrollTo(0,0);}
